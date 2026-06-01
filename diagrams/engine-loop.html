@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forrest — Engine Loop</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Fira Code', monospace; background: #0d1117; color: #c9d1d9; padding: 2rem; }
+  h1 { color: #58a6ff; font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .subtitle { color: #8b949e; margin-bottom: 2rem; font-size: 0.85rem; }
+  .loop { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .step { padding: 1rem 1.5rem; border-radius: 8px; text-align: center; min-width: 280px; position: relative; }
+  .step + .step { margin-top: 0.5rem; }
+  .arrow { color: #3fb950; font-size: 1.2rem; margin: 0.2rem 0; }
+  .start { background: #238636; color: #fff; font-weight: bold; }
+  .process { background: #161b22; border: 1px solid #30363d; }
+  .decision { background: #1f1f3a; border: 2px solid #6e40c9; color: #bc8cff; }
+  .commit { background: #1a2d1a; border: 1px solid #3fb950; color: #3fb950; }
+  .discard { background: #2d1f1a; border: 1px solid #d29922; color: #d29922; }
+  .end { background: #1a3a5c; border: 1px solid #58a6ff; color: #58a6ff; font-weight: bold; }
+  .branch { display: flex; gap: 2rem; align-items: flex-start; }
+  .branch-label { font-size: 0.75rem; color: #8b949e; text-align: center; margin-bottom: 0.3rem; }
+  .yes { color: #3fb950; }
+  .no { color: #d29922; }
+  .legend { margin-top: 2rem; padding: 1rem; background: #161b22; border-radius: 8px; border: 1px solid #30363d; }
+  .legend h3 { color: #58a6ff; font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+  .swatch { width: 16px; height: 16px; border-radius: 4px; }
+  .footer { margin-top: 2rem; color: #484f58; font-size: 0.75rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>🌲 Forrest — Engine Loop</h1>
+<p class="subtitle">Autonomous Monte Carlo Optimization — 200 iterations × 500 simulations each</p>
+
+<div class="loop">
+  <div class="step start">🚀 START RUN</div>
+  <div class="arrow">↓</div>
+  <div class="step process">📖 Read Current Best Scenario</div>
+  <div class="arrow">↓</div>
+  <div class="step process">🧠 Claude Proposes Mutation<br><small style="color:#8b949e">Hypothesis + JSON mutation</small></div>
+  <div class="arrow">↓</div>
+  <div class="step process">🔬 Run 500 Monte Carlo Simulations<br><small style="color:#8b949e">Against objective function</small></div>
+  <div class="arrow">↓</div>
+  <div class="step process">📊 Calculate Aggregate Score<br><small style="color:#8b949e">Mean, variance, P(success)</small></div>
+  <div class="arrow">↓</div>
+  <div class="step decision">❓ Score &gt; Current Best?<br><small>(with tolerance)</small></div>
+
+  <div class="branch">
+    <div>
+      <div class="branch-label yes">✅ YES</div>
+      <div class="step commit">COMMIT<br><small>New baseline</small></div>
+    </div>
+    <div>
+      <div class="branch-label no">❌ NO</div>
+      <div class="step discard">DISCARD<br><small>Lineage kept</small></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+  <div class="step decision">❓ Iterations = 200?<br><small>(or 50 for free)</small></div>
+  <div class="arrow">↓</div>
+  <div class="step process">📝 Extract 3 Plain-Language Findings<br><small style="color:#8b949e">From experiment lineage</small></div>
+  <div class="arrow">↓</div>
+  <div class="step end">📊 REPORT COMPLETE</div>
+</div>
+
+<div class="legend">
+  <h3>Legend</h3>
+  <div class="legend-grid">
+    <div class="legend-item"><div class="swatch" style="background:#238636"></div> Start / Trigger</div>
+    <div class="legend-item"><div class="swatch" style="background:#161b22;border:1px solid #30363d"></div> Process Step</div>
+    <div class="legend-item"><div class="swatch" style="background:#1f1f3a;border:2px solid #6e40c9"></div> Decision Point</div>
+    <div class="legend-item"><div class="swatch" style="background:#1a2d1a;border:1px solid #3fb950"></div> Accepted Path</div>
+    <div class="legend-item"><div class="swatch" style="background:#2d1f1a;border:1px solid #d29922"></div> Rejected Path</div>
+    <div class="legend-item"><div class="swatch" style="background:#1a3a5c;border:1px solid #58a6ff"></div> End / Deliverable</div>
+  </div>
+</div>
+
+<div class="footer">
+  Forrest Plan & Track • ChonSong/forrest-plan-and-track • 2026
+</div>
+
+</body>
+</html>

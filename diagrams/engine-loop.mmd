@@ -1,0 +1,25 @@
+%% Engine Loop — Forrest Autonomous Optimization Loop
+%% Render at mermaid.live or in any Mermaid-compatible viewer
+
+flowchart TD
+    A([🚀 Start Run]) --> B[Read Current Best Scenario]
+    B --> C{Claude Proposes Mutation}
+    C --> D[Generate Hypothesis]
+    D --> E[Apply Mutation to Scenario]
+    E --> F[Run 500 Monte Carlo Simulations]
+    F --> G[Calculate Aggregate Score]
+    G --> H{Score Beats Current Best?}
+    H -- Yes --> I[✅ Commit: New Baseline]
+    H -- No --> J[❌ Discard: Keep Lineage]
+    I --> K{Max Experiments Reached?}
+    J --> K
+    K -- No --> B
+    K -- Yes --> L[Extract 3 Findings]
+    L --> M([📊 Report Complete])
+
+    style A fill:#4CAF50,color:#fff
+    style M fill:#2196F3,color:#fff
+    style I fill:#8BC34A,color:#000
+    style J fill:#FF9800,color:#000
+    style H fill:#9C27B0,color:#fff
+    style K fill:#9C27B0,color:#fff

@@ -1,0 +1,33 @@
+%% Timeline — 14-Day Forrest Mission
+%% Render at mermaid.live or in any Mermaid-compatible viewer
+
+gantt
+    title Forrest Internship — 14-Day Mission Timeline
+    dateFormat  YYYY-MM-DD
+    axisFormat  Day %d
+
+    section Setup
+    Day 0: Read & prep          :d0, 2026-06-01, 1d
+    Day 1: Environment setup     :d1, after d0, 1d
+    Day 2: Code tour + smoke     :d2, after d1, 1d
+
+    section Scenario
+    Day 3: Scenario selection    :d3, after d2, 1d
+
+    section Tuning
+    Day 4: Tuning run #1         :d4, after d3, 1d
+    Day 5: Tuning run #2         :d5, after d4, 1d
+    Day 6: Tuning run #3 + lock  :d6, after d5, 1d
+    Day 7: Week 1 review         :d7, after d6, 1d
+
+    section Final Runs
+    Day 8: Final run #1 (200)    :d8, after d7, 1d
+    Day 9: Analyze + story       :d9, after d8, 1d
+    Day 10: Final run #2 (200)   :d10, after d9, 1d
+
+    section Polish
+    Day 11-12: Polish + bonus    :p1, after d10, 2d
+    Day 13: Dry run              :dr, after p1, 1d
+
+    section Demo
+    Day 14: Demo day             :demo, after dr, 1d

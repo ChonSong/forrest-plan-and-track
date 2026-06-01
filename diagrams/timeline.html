@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forrest — 14-Day Timeline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Fira Code', monospace; background: #0d1117; color: #c9d1d9; padding: 2rem; }
+  h1 { color: #58a6ff; font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .subtitle { color: #8b949e; margin-bottom: 2rem; font-size: 0.85rem; }
+  .timeline { max-width: 800px; margin: 0 auto; }
+  .phase { margin-bottom: 1.5rem; border-radius: 10px; overflow: hidden; border: 1px solid #30363d; }
+  .phase-header { padding: 0.8rem 1.2rem; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+  .phase-body { padding: 0.8rem 1.2rem; }
+  .day { padding: 0.4rem 0; font-size: 0.8rem; display: flex; gap: 0.8rem; border-bottom: 1px solid #21262d; }
+  .day:last-child { border-bottom: none; }
+  .day-num { color: #8b949e; min-width: 60px; }
+  .day-task { flex: 1; }
+  .day-output { color: #6e7681; font-style: italic; font-size: 0.75rem; }
+  .setup .phase-header { background: #1a2d1a; color: #3fb950; }
+  .scenario .phase-header { background: #1a1a2d; color: #bc8cff; }
+  .tuning .phase-header { background: #2d1f1a; color: #d29922; }
+  .review .phase-header { background: #1a2d2d; color: #39d353; }
+  .final .phase-header { background: #1a1a3d; color: #58a6ff; }
+  .polish .phase-header { background: #2d1a2d; color: #f78166; }
+  .demo .phase-header { background: #2d2d1a; color: #e3b341; }
+  .timeline-bar { height: 6px; background: #21262d; border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
+  .timeline-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .setup .timeline-fill { background: #3fb950; width: 21%; }
+  .scenario .timeline-fill { background: #bc8cff; width: 7%; }
+  .tuning .timeline-fill { background: #d29922; width: 29%; }
+  .review .timeline-fill { background: #39d353; width: 7%; }
+  .final .timeline-fill { background: #58a6ff; width: 21%; }
+  .polish .timeline-fill { background: #f78166; width: 21%; }
+  .demo .timeline-fill { background: #e3b341; width: 7%; }
+  .footer { margin-top: 2rem; color: #484f58; font-size: 0.75rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>📅 Forrest — 14-Day Mission Timeline</h1>
+<p class="subtitle">Two weeks. One scenario. 200 experiments. Three findings. One share-out.</p>
+
+<div class="timeline">
+
+  <div class="phase setup">
+    <div class="phase-header">
+      <span>🌱 Phase 1: Setup</span>
+      <span>Days 0-2</span>
+    </div>
+    <div class="phase-body">
+      <div class="day"><span class="day-num">Day 0</span><div><div class="day-task">Read mission doc. Check prerequisites. Notebook ready.</div><div class="day-output">Output: Notebook + environment check</div></div></div>
+      <div class="day"><span class="day-num">Day 1</span><div><div class="day-task">Clone repo, install, wire API key, start dev server. First code tour.</div><div class="day-output">Output: Forrest running locally</div></div></div>
+      <div class="day"><span class="day-num">Day 2</span><div><div class="day-task">Finish code tour. Run 50-experiment smoke test.</div><div class="day-output">Output: Smoke run + report</div></div></div>
+    </div>
+    <div class="timeline-bar"><div class="timeline-fill"></div></div>
+  </div>
+
+  <div class="phase scenario">
+    <div class="phase-header">
+      <span>🎯 Phase 2: Scenario</span>
+      <span>Day 3</span>
+    </div>
+    <div class="phase-body">
+      <div class="day"><span class="day-num">Day 3</span><div><div class="day-task">Choose domain. Write one-page brief. Enter into Forrest. Launch tuning run #1.</div><div class="day-output">Output: Scenario brief + first tuning run</div></div></div>
+    </div>
+    <div class="timeline-bar"><div class="timeline-fill"></div></div>
+  </div>
+
+  <div class="phase tuning">
+    <div class="phase-header">
+      <span>🔧 Phase 3: Tuning & Iteration</span>
+      <span>Days 4-7</span>
+    </div>
+    <div class="phase-body">
+      <div class="day"><span class="day-num">Day 4</span><div><div class="day-task">Analyze run #1. Diagnose acceptance rate + findings. Adjust. Launch run #2.</div><div class="day-output">Output: Tuning decisions documented</div></div></div>
+      <div class="day"><span class="day-num">Day 5</span><div><div class="day-task">Analyze run #2. Dive into lineage. Adjust. Launch run #3.</div><div class="day-output">Output: Findings improving</div></div></div>
+      <div class="day"><span class="day-num">Day 6</span><div><div class="day-task">Analyze run #3. Lock scenario. Launch dress rehearsal (50×500).</div><div class="day-output">Output: Locked scenario config</div></div></div>
+      <div class="day"><span class="day-num">Day 7</span><div><div class="day-task">Week 1 review. Three-things notebook. Weekly note to #forrest-eng.</div><div class="day-output">Output: Review complete + weekly note</div></div></div>
+    </div>
+    <div class="timeline-bar"><div class="timeline-fill"></div></div>
+  </div>
+
+  <div class="phase final">
+    <div class="phase-header">
+      <span>🚀 Phase 4: Final Runs</span>
+      <span>Days 8-10</span>
+    </div>
+    <div class="phase-body">
+      <div class="day"><span class="day-num">Day 8</span><div><div class="day-task">Launch final run #1: 200 experiments × 500 sims.</div><div class="day-output">Output: Full 200-experiment run</div></div></div>
+      <div class="day"><span class="day-num">Day 9</span><div><div class="day-task">Deep-dive analysis. Identify featured finding + lineage. Draft share-out.</div><div class="day-output">Output: Story structure complete</div></div></div>
+      <div class="day"><span class="day-num">Day 10</span><div><div class="day-task">Launch final run #2: Confidence check. Compare findings.</div><div class="day-output">Output: Reproducibility confirmed</div></div></div>
+    </div>
+    <div class="timeline-bar"><div class="timeline-fill"></div></div>
+  </div>
+
+  <div class="phase polish">
+    <div class="phase-header">
+      <span>✨ Phase 5: Polish & Bonus</span>
+      <span>Days 11-13</span>
+    </div>
+    <div class="phase-body">
+      <div class="day"><span class="day-num">Day 11-12</span><div><div class="day-task">Rehearse share-out. Create handoff doc. Bonus: PR / seed / docs.</div><div class="day-output">Output: Polished talk + bonus artifacts</div></div></div>
+      <div class="day"><span class="day-num">Day 13</span><div><div class="day-task">Full dry run. Fix anything unclear. Verify all assets.</div><div class="day-output">Output: Demo-ready</div></div></div>
+    </div>
+    <div class="timeline-bar"><div class="timeline-fill"></div></div>
+  </div>
+
+  <div class="phase demo">
+    <div class="phase-header">
+      <span>🎤 Phase 6: Demo Day</span>
+      <span>Day 14</span>
+    </div>
+    <div class="phase-body">
+      <div class="day"><span class="day-num">Day 14</span><div><div class="day-task">15-minute share-out. Setup → Loop → Findings → Surprise → Q&A.</div><div class="day-output">Output: Mission complete ✅</div></div></div>
+    </div>
+    <div class="timeline-bar"><div class="timeline-fill"></div></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Forrest Plan & Track • ChonSong/forrest-plan-and-track • 2026
+</div>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+%% Data Model — Forrest 4-Entity Schema
+%% Render at mermaid.live or in any Mermaid-compatible viewer
+
+erDiagram
+    SCARIO {
+        string id PK
+        string description
+        json mutationSpace
+        json objective
+        datetime createdAt
+    }
+    RUN {
+        string id PK
+        string scenarioId FK
+        float baselineScore
+        float bestScore
+        string status
+        int maxExperiments
+        datetime startedAt
+        datetime completedAt
+    }
+    EXPERIMENT {
+        string id PK
+        string runId FK
+        int iteration
+        string hypothesis
+        json mutation
+        float score
+        boolean accepted
+        datetime createdAt
+    }
+    FINDING {
+        string id PK
+        string runId FK
+        int rank
+        string content
+        string lineageRef
+        datetime createdAt
+    }
+    SCARIO ||--o{ RUN : "has many"
+    RUN ||--o{ EXPERIMENT : "has many"
+    RUN ||--o{ FINDING : "produces 3"

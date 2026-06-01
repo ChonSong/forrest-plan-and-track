@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forrest — Data Model</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Fira Code', monospace; background: #0d1117; color: #c9d1d9; padding: 2rem; }
+  h1 { color: #58a6ff; font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .subtitle { color: #8b949e; margin-bottom: 2rem; font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+  .entity { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem; }
+  .entity h2 { font-size: 1rem; margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 1px solid #30363d; }
+  .scenario h2 { color: #3fb950; }
+  .run h2 { color: #58a6ff; }
+  .experiment h2 { color: #d29922; }
+  .finding h2 { color: #bc8cff; }
+  .field { display: flex; justify-content: space-between; padding: 0.3rem 0; font-size: 0.8rem; border-bottom: 1px solid #21262d; }
+  .field:last-child { border-bottom: none; }
+  .field-name { color: #8b949e; }
+  .field-type { color: #6e7681; font-style: italic; }
+  .pk { color: #f0883e; }
+  .fk { color: #58a6ff; }
+  .relationships { margin-top: 2rem; padding: 1rem; background: #161b22; border: 1px solid #30363d; border-radius: 10px; max-width: 900px; margin-left: auto; margin-right: auto; }
+  .relationships h3 { color: #58a6ff; font-size: 0.9rem; margin-bottom: 0.8rem; }
+  .rel { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; font-size: 0.85rem; }
+  .rel-arrow { color: #3fb950; }
+  .rel-name { color: #8b949e; }
+  .footer { margin-top: 2rem; color: #484f58; font-size: 0.75rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>🗄️ Forrest — Data Model</h1>
+<p class="subtitle">4 entities: Scenario → Run → Experiment + Finding • Prisma 7 • SQLite</p>
+
+<div class="grid">
+  <div class="entity scenario">
+    <h2>📋 Scenario</h2>
+    <div class="field"><span class="field-name pk">id</span><span class="field-type">String (PK)</span></div>
+    <div class="field"><span class="field-name">description</span><span class="field-type">String</span></div>
+    <div class="field"><span class="field-name">mutationSpace</span><span class="field-type">JSON</span></div>
+    <div class="field"><span class="field-name">objective</span><span class="field-type">JSON</span></div>
+    <div class="field"><span class="field-name">constraints</span><span class="field-type">JSON</span></div>
+    <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+  </div>
+
+  <div class="entity run">
+    <h2>🏃 Run</h2>
+    <div class="field"><span class="field-name pk">id</span><span class="field-type">String (PK)</span></div>
+    <div class="field"><span class="field-name fk">scenarioId</span><span class="field-type">String (FK)</span></div>
+    <div class="field"><span class="field-name">baselineScore</span><span class="field-type">Float</span></div>
+    <div class="field"><span class="field-name">bestScore</span><span class="field-type">Float</span></div>
+    <div class="field"><span class="field-name">status</span><span class="field-type">String</span></div>
+    <div class="field"><span class="field-name">maxExperiments</span><span class="field-type">Int</span></div>
+    <div class="field"><span class="field-name">simsPerExpt</span><span class="field-type">Int</span></div>
+    <div class="field"><span class="field-name">startedAt</span><span class="field-type">DateTime</span></div>
+    <div class="field"><span class="field-name">completedAt</span><span class="field-type">DateTime</span></div>
+  </div>
+
+  <div class="entity experiment">
+    <h2>🧪 Experiment</h2>
+    <div class="field"><span class="field-name pk">id</span><span class="field-type">String (PK)</span></div>
+    <div class="field"><span class="field-name fk">runId</span><span class="field-type">String (FK)</span></div>
+    <div class="field"><span class="field-name">iteration</span><span class="field-type">Int</span></div>
+    <div class="field"><span class="field-name">hypothesis</span><span class="field-type">String</span></div>
+    <div class="field"><span class="field-name">mutation</span><span class="field-type">JSON</span></div>
+    <div class="field"><span class="field-name">score</span><span class="field-type">Float</span></div>
+    <div class="field"><span class="field-name">accepted</span><span class="field-type">Boolean</span></div>
+    <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+  </div>
+
+  <div class="entity finding">
+    <h2>💡 Finding</h2>
+    <div class="field"><span class="field-name pk">id</span><span class="field-type">String (PK)</span></div>
+    <div class="field"><span class="field-name fk">runId</span><span class="field-type">String (FK)</span></div>
+    <div class="field"><span class="field-name">rank</span><span class="field-type">Int (1-3)</span></div>
+    <div class="field"><span class="field-name">content</span><span class="field-type">String</span></div>
+    <div class="field"><span class="field-name">lineageRef</span><span class="field-type">String</span></div>
+    <div class="field"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+  </div>
+</div>
+
+<div class="relationships">
+  <h3>Relationships</h3>
+  <div class="rel"><span>📋 Scenario</span> <span class="rel-arrow">──1:N──▶</span> <span>🏃 Run</span> <span class="rel-name">One scenario, many runs</span></div>
+  <div class="rel"><span>🏃 Run</span> <span class="rel-arrow">──1:N──▶</span> <span>🧪 Experiment</span> <span class="rel-name">One run, 200 experiments</span></div>
+  <div class="rel"><span>🏃 Run</span> <span class="rel-arrow">──1:3──▶</span> <span>💡 Finding</span> <span class="rel-name">One run produces 3 findings</span></div>
+</div>
+
+<div class="footer">
+  Forrest Plan & Track • ChonSong/forrest-plan-and-track • 2026
+</div>
+
+</body>
+</html>
