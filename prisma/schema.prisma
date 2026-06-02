@@ -1,1192 +1,1949 @@
-// OneTag HMAS Sydney — Auto-generated Prisma Schema
-// Source: SQL Server database exported to SQLite
+// OneTag HMAS Sydney — Prisma Schema
+// Source: SQL Server 2019 backup, 104 tables, 248 FK relationships
 
 datasource db {
   provider = "sqlite"
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model Activities {
-  Id String?
-  GroupVesselId String?
-  Number String?
-  Comment String?
-  Active String?
-  ActivityStartDate String?
-  ActivityEndDate String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  GroupVesselId String @db.Uuid
+  Number String
+  Comment String
+  Active Boolean
+  ActivityStartDate DateTime
+  ActivityEndDate DateTime
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  groups Groups? @relation(fields: [GroupVesselId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Activities")
 }
 
+model AreaSystem {
+  AreasId String @id
+  SystemsId String @id
+  areas Areas? @relation(fields: [AreasId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AreasId, SystemsId])
+
+  @@map("AreaSystem")
+}
+
 model AreaTypes {
-  Id String?
-  Name String?
-  Description String?
-  SecureArea String?
-  HighRisk String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  SecureArea Boolean
+  HighRisk Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("AreaTypes")
 }
 
 model Areas {
-  Id String?
-  Name String?
-  Description String?
-  Code String?
-  GroupId String?
-  AreaTypeId String?
-  DepartmentId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  SerialisedBounds String?
-  SerialisedOrigin String?
-  ParentAreaId String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  Code String
+  GroupId String @db.Uuid
+  AreaTypeId String @db.Uuid
+  DepartmentId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SerialisedBounds String
+  SerialisedOrigin String
+  ParentAreaId String? @db.Uuid
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  areaTypes AreaTypes? @relation(fields: [AreaTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  departments Departments? @relation(fields: [DepartmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  areas Areas? @relation(fields: [ParentAreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Areas")
 }
 
+model AssetLogs {
+  Id String @id @default(uuid())
+  AssetTypeId String @db.Uuid
+  UserId String @db.Uuid
+  ChangeAmount Float
+  Comment String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  assetTypes AssetTypes? @relation(fields: [AssetTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("AssetLogs")
+}
+
 model AssetTypes {
-  Id String?
-  Name String?
-  Description String?
-  Flags String?
-  TotalCount String?
-  TotalInUse String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  Flags Decimal
+  TotalCount Float
+  TotalInUse Float
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("AssetTypes")
 }
 
 model AuditCheckResource {
-  AuditChecksId String?
-  ResourcesId String?
+  AuditChecksId String @id
+  ResourcesId String @id
+  auditChecks AuditChecks? @relation(fields: [AuditChecksId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AuditChecksId, ResourcesId])
 
   @@map("AuditCheckResource")
 }
 
 model AuditChecks {
-  Id String?
-  AuditId String?
-  RFIIsolationId String?
-  RFIJobId String?
-  AuditCheckType String?
-  DefectFound String?
-  DefectDescription String?
-  ActionsTaken String?
-  ActionsDescription String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  TemporaryTagId String?
-  CheckQuestion String?
-  RFIId String?
-  AuditCheckDate String?
+  Id String @id @default(uuid())
+  AuditId String @db.Uuid
+  RFIIsolationId String? @db.Uuid
+  RFIJobId String? @db.Uuid
+  AuditCheckType Int
+  DefectFound Boolean
+  DefectDescription String
+  ActionsTaken Boolean
+  ActionsDescription String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  TemporaryTagId String? @db.Uuid
+  CheckQuestion String
+  RFIId String? @db.Uuid
+  AuditCheckDate DateTime
+  audits Audits? @relation(fields: [AuditId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIIsolations RFIIsolations? @relation(fields: [RFIIsolationId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIJobs RFIJobs? @relation(fields: [RFIJobId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  temporaryTags TemporaryTags? @relation(fields: [TemporaryTagId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("AuditChecks")
 }
 
 model AuditDefects {
-  Id String?
-  AuditId String?
-  IsolationPointId String?
-  DefectDescription String?
-  AuditDefectDate String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  AuditId String @db.Uuid
+  IsolationPointId String @db.Uuid
+  DefectDescription String
+  AuditDefectDate DateTime
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  audits Audits? @relation(fields: [AuditId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("AuditDefects")
 }
 
 model AuditLogs {
-  Id String?
-  AuditId String?
-  Description String?
-  Comment String?
-  AuditLogType String?
-  UserId String?
-  ResourceId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  PriorityExpiry String?
-  UserSnapshot String?
+  Id String @id @default(uuid())
+  AuditId String @db.Uuid
+  Description String
+  Comment String
+  AuditLogType Int
+  UserId String @db.Uuid
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  PriorityExpiry DateTime?
+  UserSnapshot String
+  audits Audits? @relation(fields: [AuditId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("AuditLogs")
 }
 
 model AuditRFIIsolationSnapshots {
-  Id String?
-  AuditId String?
-  RFIIsolationId String?
-  ResourceId String?
+  Id String @id @default(uuid())
+  AuditId String @db.Uuid
+  RFIIsolationId String @db.Uuid
+  ResourceId String @db.Uuid
+  audits Audits? @relation(fields: [AuditId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIIsolations RFIIsolations? @relation(fields: [RFIIsolationId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("AuditRFIIsolationSnapshots")
 }
 
 model AuditRFIIsolations {
-  AuditsId String?
-  RFIIsolationsId String?
+  AuditsId String @id
+  RFIIsolationsId String @id
+  audits Audits? @relation(fields: [AuditsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIIsolations RFIIsolations? @relation(fields: [RFIIsolationsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AuditsId, RFIIsolationsId])
 
   @@map("AuditRFIIsolations")
 }
 
+model AuditRFIJobs {
+  AuditsId String @id
+  RFIJobsId String @id
+  audits Audits? @relation(fields: [AuditsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIJobs RFIJobs? @relation(fields: [RFIJobsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AuditsId, RFIJobsId])
+
+  @@map("AuditRFIJobs")
+}
+
 model AuditRFIs {
-  AuditsId String?
-  RFIsId String?
+  AuditsId String @id
+  RFIsId String @id
+  audits Audits? @relation(fields: [AuditsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIs RFIs? @relation(fields: [RFIsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AuditsId, RFIsId])
 
   @@map("AuditRFIs")
 }
 
+model AuditTemporaryTags {
+  AuditsId String @id
+  TemporaryTagsId String @id
+  audits Audits? @relation(fields: [AuditsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  temporaryTags TemporaryTags? @relation(fields: [TemporaryTagsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AuditsId, TemporaryTagsId])
+
+  @@map("AuditTemporaryTags")
+}
+
 model Audits {
-  Id String?
-  Name String?
-  Description String?
-  AuditType String?
-  AuditState String?
-  EventStartDate String?
-  EventEndDate String?
-  ActivityId String?
-  ReservedUserId String?
-  DateCompleted String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Defects String?
-  DateApproved String?
-  ApprovedUserId String?
-  ApprovedUserSnapshot String?
-  ReservedUserSnapshot String?
-  DateSignOff String?
-  SignOffUserId String?
-  SignOffUserSnapshot String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  AuditType Int
+  AuditState Int
+  EventStartDate DateTime
+  EventEndDate DateTime
+  ActivityId String? @db.Uuid
+  ReservedUserId String? @db.Uuid
+  DateCompleted DateTime?
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Defects Boolean
+  DateApproved DateTime?
+  ApprovedUserId String? @db.Uuid
+  ApprovedUserSnapshot String
+  ReservedUserSnapshot String
+  DateSignOff DateTime?
+  SignOffUserId String? @db.Uuid
+  SignOffUserSnapshot String
+  activities Activities? @relation(fields: [ActivityId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [ReservedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_approveduser Users? @relation(fields: [ApprovedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_signoffuser Users? @relation(fields: [SignOffUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Audits")
 }
 
 model BoundaryTemplateItems {
-  Id String?
-  BoundaryTemplateId String?
-  Index String?
-  Comment String?
-  IsolationPointId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  AppliedState String?
-  EquipmentId String?
-  HoldPoint String?
-  DraftCreated String?
+  Id String @id @default(uuid())
+  BoundaryTemplateId String @db.Uuid
+  Index Int
+  Comment String
+  IsolationPointId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  AppliedState Int
+  EquipmentId String? @db.Uuid
+  HoldPoint Boolean
+  DraftCreated Boolean
+  boundaryTemplates BoundaryTemplates? @relation(fields: [BoundaryTemplateId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  equipment Equipment? @relation(fields: [EquipmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("BoundaryTemplateItems")
 }
 
 model BoundaryTemplateLogs {
-  Id String?
-  BoundaryTemplateId String?
-  Description String?
-  Comment String?
-  BoundaryTemplateLogType String?
-  UserId String?
-  UserSnapshot String?
-  ResourceId String?
-  PriorityExpiry String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  BoundaryTemplateId String @db.Uuid
+  Description String
+  Comment String
+  BoundaryTemplateLogType Int
+  UserId String @db.Uuid
+  UserSnapshot String
+  ResourceId String? @db.Uuid
+  PriorityExpiry DateTime?
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  boundaryTemplates BoundaryTemplates? @relation(fields: [BoundaryTemplateId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("BoundaryTemplateLogs")
 }
 
+model BoundaryTemplateRFI {
+  BoundaryTemplatesId String @id
+  RFIsId String @id
+  boundaryTemplates BoundaryTemplates? @relation(fields: [BoundaryTemplatesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIs RFIs? @relation(fields: [RFIsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([BoundaryTemplatesId, RFIsId])
+
+  @@map("BoundaryTemplateRFI")
+}
+
+model BoundaryTemplateResource {
+  BoundaryTemplatesId String @id
+  ResourcesId String @id
+  boundaryTemplates BoundaryTemplates? @relation(fields: [BoundaryTemplatesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([BoundaryTemplatesId, ResourcesId])
+
+  @@map("BoundaryTemplateResource")
+}
+
+model BoundaryTemplateStandardActivity {
+  BoundaryTemplatesId String @id
+  StandardActivitiesId String @id
+  boundaryTemplates BoundaryTemplates? @relation(fields: [BoundaryTemplatesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  standardActivities StandardActivities? @relation(fields: [StandardActivitiesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([BoundaryTemplatesId, StandardActivitiesId])
+
+  @@map("BoundaryTemplateStandardActivity")
+}
+
 model BoundaryTemplateSystem {
-  BoundaryTemplatesId String?
-  SystemsId String?
+  BoundaryTemplatesId String @id
+  SystemsId String @id
+  boundaryTemplates BoundaryTemplates? @relation(fields: [BoundaryTemplatesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([BoundaryTemplatesId, SystemsId])
 
   @@map("BoundaryTemplateSystem")
 }
 
 model BoundaryTemplates {
-  Id String?
-  Name String?
-  Description String?
-  BoundaryTemplateType String?
-  UserId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Version String?
-  OnHold String?
-  CreatorUserId String?
-  CreatorUserSnapshot String?
-  DeactivatedBy String?
-  DeactivatedDate String?
-  LastModifiedUserId String?
-  LastModifiedUserSnapshot String?
-  Imported String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  BoundaryTemplateType Int
+  UserId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Version String
+  OnHold Boolean
+  CreatorUserId String @db.Uuid
+  CreatorUserSnapshot String
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  LastModifiedUserId String @db.Uuid
+  LastModifiedUserSnapshot String
+  Imported Boolean
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_creatoruser Users? @relation(fields: [CreatorUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_lastmodifieduser Users? @relation(fields: [LastModifiedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("BoundaryTemplates")
 }
 
+model CheckListTemplateDepartments {
+  CheckListTemplatesId String @id
+  DepartmentsId String @id
+  checkListTemplates CheckListTemplates? @relation(fields: [CheckListTemplatesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  departments Departments? @relation(fields: [DepartmentsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([CheckListTemplatesId, DepartmentsId])
+
+  @@map("CheckListTemplateDepartments")
+}
+
+model CheckListTemplateItems {
+  Id String @id @default(uuid())
+  Name String
+  Version String
+  Instruction String
+  CheckListTemplateItemType Int
+  CheckListTemplateId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  EquipmentId String? @db.Uuid
+  IsolationPointId String? @db.Uuid
+  EnergyNominalType Int
+  EnergyNominalValue Decimal
+  SwMATable Int
+  TimeInMins Int
+  Index Int
+  ResourceId String? @db.Uuid
+  checkListTemplates CheckListTemplates? @relation(fields: [CheckListTemplateId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  equipment Equipment? @relation(fields: [EquipmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("CheckListTemplateItems")
+}
+
+model CheckListTemplateTypes {
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+
+  @@map("CheckListTemplateTypes")
+}
+
+model CheckListTemplates {
+  Id String @id @default(uuid())
+  Name String
+  Version String
+  GroupId String @db.Uuid
+  CheckListTemplateTypeId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SwMANumber String
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  checkListTemplateTypes CheckListTemplateTypes? @relation(fields: [CheckListTemplateTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("CheckListTemplates")
+}
+
 model Companies {
-  Id String?
-  Name String?
-  Phone String?
-  Email String?
-  ContactPerson String?
-  Address String?
-  GroupId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Code String?
-  DeactivatedBy String?
-  DeactivatedDate String?
+  Id String @id @default(uuid())
+  Name String
+  Phone String
+  Email String
+  ContactPerson String
+  Address String
+  GroupId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Code String
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Companies")
 }
 
+model CoordinateSystems {
+  Id String @id @default(uuid())
+  Name String
+  SerialisedBounds String
+  SerialisedOrigin String
+  Rotation Float
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+
+  @@map("CoordinateSystems")
+}
+
 model DangerTag {
-  Id String?
-  TagNumber String?
-  SerialNumber String?
-  TrackingEnabled String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  PrintCount String?
+  Id String @id @default(uuid())
+  TagNumber String
+  SerialNumber String
+  TrackingEnabled Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  PrintCount BigInt
 
   @@map("DangerTag")
 }
 
 model Departments {
-  Id String?
-  Name String?
-  Description String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  ParentDepartmentId String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  ParentDepartmentId String? @db.Uuid
+  departments Departments? @relation(fields: [ParentDepartmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Departments")
 }
 
 model Equipment {
-  Id String?
-  Name String?
-  SerialNumber String?
-  Description String?
-  AreaId String?
-  SystemId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  SerialisedPosition String?
+  Id String @id @default(uuid())
+  Name String
+  SerialNumber String
+  Description String
+  AreaId String @db.Uuid
+  SystemId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SerialisedPosition String
+  areas Areas? @relation(fields: [AreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Equipment")
 }
 
 model EquipmentIsolations {
-  EquipmentId String?
-  IsolationPointId String?
-  Id String?
-  Notes String?
-  Secondary String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  EquipmentId String @id
+  IsolationPointId String @id
+  Id String @db.Uuid
+  Notes String
+  Secondary Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  equipment Equipment? @relation(fields: [EquipmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([EquipmentId, IsolationPointId])
 
   @@map("EquipmentIsolations")
 }
 
-model GroupTypes {
-  Id String?
-  Name String?
+model EventLogTransactions {
+  Id BigInt @id
+  EventLogId String @db.Uuid
+
+  @@map("EventLogTransactions")
+}
+
+model EventLogs {
+  Id String @id @default(uuid())
+  UserId String? @db.Uuid
+  EventLogArea String
+  EventLogOperations Int
+  ObjectId String @db.Uuid
   Description String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  CreatedDate DateTime
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("EventLogs")
+}
+
+model GroupTypes {
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("GroupTypes")
 }
 
 model Groups {
-  Id String?
-  ParentId String?
-  GroupTypeId String?
-  Name String?
-  Description String?
-  Code String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  CoordinateSystemId String?
-  MapId String?
+  Id String @id @default(uuid())
+  ParentId String? @db.Uuid
+  GroupTypeId String @db.Uuid
+  Name String
+  Description String
+  Code String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  CoordinateSystemId String? @db.Uuid
+  MapId String? @db.Uuid
+  groups Groups? @relation(fields: [ParentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  groupTypes GroupTypes? @relation(fields: [GroupTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  coordinateSystems CoordinateSystems? @relation(fields: [CoordinateSystemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  maps Maps? @relation(fields: [MapId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Groups")
 }
 
 model IsolationPointChecks {
-  Id String?
-  IsolationPointTypeId String?
-  IsolationPointId String?
-  Name String?
-  Mandatory String?
-  Order String?
-  DisplayText String?
-  BooleanType String?
-  DefaultValue String?
-  IsolationPointStates String?
-  MovingToStates String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  IsolationPointTypeId String? @db.Uuid
+  IsolationPointId String? @db.Uuid
+  Name String
+  Mandatory Boolean
+  Order Int
+  DisplayText String
+  BooleanType Boolean
+  DefaultValue String
+  IsolationPointStates Int
+  MovingToStates Int
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  isolationPointTypes IsolationPointTypes? @relation(fields: [IsolationPointTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("IsolationPointChecks")
 }
 
+model IsolationPointIsolationPoint {
+  IsolationPointId String @id
+  ParentIsolationPointId String @id
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints_parentisolationpoint IsolationPoints? @relation(fields: [ParentIsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([IsolationPointId, ParentIsolationPointId])
+
+  @@map("IsolationPointIsolationPoint")
+}
+
 model IsolationPointLogs {
-  Id String?
-  IsolationPointId String?
-  Description String?
-  IsolationPointLogType String?
-  UserId String?
-  ResourceId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Comment String?
-  UserSnapshot String?
+  Id String @id @default(uuid())
+  IsolationPointId String @db.Uuid
+  Description String
+  IsolationPointLogType Int
+  UserId String @db.Uuid
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Comment String
+  UserSnapshot String
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("IsolationPointLogs")
 }
 
+model IsolationPointResource {
+  IsolationPointsId String @id
+  ResourcesId String @id
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([IsolationPointsId, ResourcesId])
+
+  @@map("IsolationPointResource")
+}
+
 model IsolationPointTypes {
-  Id String?
-  Name String?
-  Description String?
-  IsolationType String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  IsolationType Int
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("IsolationPointTypes")
 }
 
 model IsolationPoints {
-  Id String?
-  IsolationPointStatus String?
-  Name String?
-  FLOC String?
-  TallyPlate String?
-  Description String?
-  DeactiveState String?
-  ActiveState String?
-  CurrentState String?
-  IsolationPointTypeId String?
-  AreaId String?
-  SubAreaId String?
-  CriticalSystem String?
-  HighRiskPlant String?
-  Lockable String?
-  PreferredPadLockTypeId String?
-  ValidationPossible String?
-  ValidationMethod String?
-  EnergyPotentialValue String?
-  EnergyPotentialType String?
-  EnergyPotentialSubValue String?
-  EnergyPotentialSubValueType String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  SerialisedPosition String?
-  SystemId String?
-  UID String?
-  DeactivatedBy String?
-  DeactivatedDate String?
-  DefectReported String?
-  Version String?
-  DefectDescription String?
-  EnergyPotential String?
-  OneTagDisplayName String?
-  SufficientIsolation String?
-  AlternateLockoutDeviceTypeId String?
-  PreferredLockoutDeviceTypeId String?
-  CreatorUserId String?
-  CreatorUserSnapshot String?
-  LastModifiedUserId String?
-  LastModifiedUserSnapshot String?
+  Id String @id @default(uuid())
+  IsolationPointStatus Int
+  Name String
+  FLOC String
+  TallyPlate String
+  Description String
+  DeactiveState Int
+  ActiveState Int
+  CurrentState Int
+  IsolationPointTypeId String @db.Uuid
+  AreaId String @db.Uuid
+  SubAreaId String? @db.Uuid
+  CriticalSystem Boolean
+  HighRiskPlant Boolean
+  Lockable Boolean
+  PreferredPadLockTypeId String? @db.Uuid
+  ValidationPossible Boolean
+  ValidationMethod String
+  EnergyPotentialValue Decimal
+  EnergyPotentialType Int
+  EnergyPotentialSubValue Decimal
+  EnergyPotentialSubValueType Int
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SerialisedPosition String
+  SystemId String? @db.Uuid
+  UID String
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  DefectReported Boolean
+  Version String
+  DefectDescription String
+  EnergyPotential String
+  OneTagDisplayName String
+  SufficientIsolation Boolean
+  AlternateLockoutDeviceTypeId String? @db.Uuid
+  PreferredLockoutDeviceTypeId String? @db.Uuid
+  CreatorUserId String @db.Uuid
+  CreatorUserSnapshot String
+  LastModifiedUserId String @db.Uuid
+  LastModifiedUserSnapshot String
+  isolationPointTypes IsolationPointTypes? @relation(fields: [IsolationPointTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  areas Areas? @relation(fields: [AreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  areas_subarea Areas? @relation(fields: [SubAreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  padLockTypes PadLockTypes? @relation(fields: [PreferredPadLockTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  lockoutDeviceTypes LockoutDeviceTypes? @relation(fields: [AlternateLockoutDeviceTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  lockoutDeviceTypes_preferredlockoutdevicetype LockoutDeviceTypes? @relation(fields: [PreferredLockoutDeviceTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [CreatorUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_lastmodifieduser Users? @relation(fields: [LastModifiedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("IsolationPoints")
 }
 
 model JobLogs {
-  Id String?
-  JobId String?
-  JobLogType String?
-  Description String?
-  Comment String?
-  UserId String?
-  UserSnapshot String?
-  ResourceId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  JobId String @db.Uuid
+  JobLogType Int
+  Description String
+  Comment String
+  UserId String @db.Uuid
+  UserSnapshot String
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  jobs Jobs? @relation(fields: [JobId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("JobLogs")
 }
 
+model JobResource {
+  JobsId String @id
+  ResourcesId String @id
+  jobs Jobs? @relation(fields: [JobsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([JobsId, ResourcesId])
+
+  @@map("JobResource")
+}
+
+model JobWorkPermitType {
+  JobId String @id
+  WorkPermitTypeId String @id
+  jobs Jobs? @relation(fields: [JobId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  workPermitTypes WorkPermitTypes? @relation(fields: [WorkPermitTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([JobId, WorkPermitTypeId])
+
+  @@map("JobWorkPermitType")
+}
+
 model Jobs {
-  Id String?
-  CompanyId String?
+  Id String @id @default(uuid())
+  CompanyId String? @db.Uuid
   JobNumber String?
   NoteNumber String?
   Description String?
-  ReasonCodeId String?
-  SystemId String?
-  StandardActivityId String?
-  PlannedStartDate String?
-  PlannedEndDate String?
-  InternalTask String?
-  JobState String?
-  SetToWorkRequired String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  ActivityId String?
-  GroupId String?
-  DepartmentId String?
-  ControlledJob String?
-  OnHold String?
+  ReasonCodeId String? @db.Uuid
+  SystemId String? @db.Uuid
+  StandardActivityId String? @db.Uuid
+  PlannedStartDate DateTime?
+  PlannedEndDate DateTime?
+  InternalTask Boolean
+  JobState Int
+  SetToWorkRequired Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  ActivityId String? @db.Uuid
+  GroupId String? @db.Uuid
+  DepartmentId String? @db.Uuid
+  ControlledJob Boolean
+  OnHold Boolean
+  companies Companies? @relation(fields: [CompanyId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  reasonCodes ReasonCodes? @relation(fields: [ReasonCodeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  standardActivities StandardActivities? @relation(fields: [StandardActivityId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  activities Activities? @relation(fields: [ActivityId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  departments Departments? @relation(fields: [DepartmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Jobs")
 }
 
 model Lockboxes {
-  Id String?
-  SerialNumber String?
-  RFIId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  DeactivatedBy String?
-  DeactivatedDate String?
+  Id String @id @default(uuid())
+  SerialNumber String
+  RFIId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Lockboxes")
 }
 
 model LockoutDeviceTypes {
-  Id String?
-  Name String?
-  Colour String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  TotalCount String?
-  TotalInUse String?
+  Id String @id @default(uuid())
+  Name String
+  Colour String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  TotalCount Float
+  TotalInUse Float
 
   @@map("LockoutDeviceTypes")
 }
 
+model LockoutDevices {
+  Id String @id @default(uuid())
+  SerialNumber String
+  LockoutDeviceTypeId String @db.Uuid
+  UserId String? @db.Uuid
+  TrackingEnabled Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  lockoutDeviceTypes LockoutDeviceTypes? @relation(fields: [LockoutDeviceTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("LockoutDevices")
+}
+
+model Maps {
+  Id String @id @default(uuid())
+  Name String
+  ResourceId String @db.Uuid
+  SerialisedOrigin String
+  SerialisedScale String
+  SerialisedBounds String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("Maps")
+}
+
+model MessageTemplates {
+  Id String @id @default(uuid())
+  MessageNote String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+
+  @@map("MessageTemplates")
+}
+
+model Messages {
+  Id String @id @default(uuid())
+  UserId String? @db.Uuid
+  SenderUserId String? @db.Uuid
+  SourceMessageId String? @db.Uuid
+  MessageNote String?
+  AssociatedTableId String? @db.Uuid
+  AssociatedTable Int
+  MessageType Int
+  MessageStatus Int
+  BroadcastStart DateTime?
+  BroadcastEnd DateTime?
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_senderuser Users? @relation(fields: [SenderUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  messages Messages? @relation(fields: [SourceMessageId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("Messages")
+}
+
 model PadLockTypes {
-  Id String?
-  Name String?
-  Colour String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  PersonalLock String?
-  VerificationLock String?
-  DeactivatedBy String?
-  DeactivatedDate String?
+  Id String @id @default(uuid())
+  Name String
+  Colour String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  PersonalLock Boolean
+  VerificationLock Boolean
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
 
   @@map("PadLockTypes")
 }
 
 model PadLocks {
-  Id String?
-  SerialNumber String?
-  PadLockTypeId String?
-  UserId String?
-  TrackingEnabled String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Active String?
-  DeactivatedBy String?
-  DeactivatedDate String?
+  Id String @id @default(uuid())
+  SerialNumber String
+  PadLockTypeId String @db.Uuid
+  UserId String? @db.Uuid
+  TrackingEnabled Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Active Boolean
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  padLockTypes PadLockTypes? @relation(fields: [PadLockTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("PadLocks")
 }
 
 model PermissionGroups {
-  Id String?
-  Name String?
-  Description String?
-  IsSystem String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  SortOrder String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  IsSystem Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SortOrder Int
 
   @@map("PermissionGroups")
 }
 
 model Permissions {
-  Id String?
-  Key String?
-  Name String?
-  Description String?
-  IsActive String?
-  PermissionGroupId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  SortOrder String?
+  Id String @id @default(uuid())
+  Key String
+  Name String
+  Description String
+  IsActive Boolean
+  PermissionGroupId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SortOrder Int
+  permissionGroups PermissionGroups? @relation(fields: [PermissionGroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Permissions")
 }
 
+model RFIAreas {
+  AreasId String @id
+  RFIsId String @id
+  areas Areas? @relation(fields: [AreasId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIs RFIs? @relation(fields: [RFIsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AreasId, RFIsId])
+
+  @@map("RFIAreas")
+}
+
 model RFIIsolationResource {
-  IsolationsId String?
-  ResourcesId String?
+  IsolationsId String @id
+  ResourcesId String @id
+  rFIIsolations RFIIsolations? @relation(fields: [IsolationsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([IsolationsId, ResourcesId])
 
   @@map("RFIIsolationResource")
 }
 
 model RFIIsolations {
-  Id String?
-  RFIId String?
-  IsolationPointId String?
-  DangerTagId String?
-  PadLockId String?
-  LockOutDeviceId String?
-  EquipmentId String?
-  RFIIsolationState String?
-  Description String?
-  AppliedState String?
-  AppliedUserId String?
-  AppliedSignatureId String?
-  AppliedDate String?
-  RemovalState String?
-  RemovalUserId String?
-  RemovalSignatureId String?
-  RemovalDate String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  HighRisk String?
-  HoldPoint String?
-  Index String?
-  Printed String?
-  PrintedUserId String?
-  ReservedUserId String?
-  LockOutDeviceTypeId String?
-  RFILockBoxId String?
-  LastAuditId String?
-  AppliedUserSnapshot String?
-  PrintedUserSnapshot String?
-  RemovalUserSnapshot String?
-  ReservedUserSnapshot String?
+  Id String @id @default(uuid())
+  RFIId String @db.Uuid
+  IsolationPointId String? @db.Uuid
+  DangerTagId String? @db.Uuid
+  PadLockId String? @db.Uuid
+  LockOutDeviceId String? @db.Uuid
+  EquipmentId String? @db.Uuid
+  RFIIsolationState Int
+  Description String
+  AppliedState Int
+  AppliedUserId String? @db.Uuid
+  AppliedSignatureId String? @db.Uuid
+  AppliedDate DateTime
+  RemovalState Int
+  RemovalUserId String? @db.Uuid
+  RemovalSignatureId String? @db.Uuid
+  RemovalDate DateTime
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  HighRisk Boolean
+  HoldPoint Boolean
+  Index Int
+  Printed Boolean
+  PrintedUserId String? @db.Uuid
+  ReservedUserId String? @db.Uuid
+  LockOutDeviceTypeId String? @db.Uuid
+  RFILockBoxId String? @db.Uuid
+  LastAuditId String? @db.Uuid
+  AppliedUserSnapshot String
+  PrintedUserSnapshot String
+  RemovalUserSnapshot String
+  ReservedUserSnapshot String
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  dangerTag DangerTag? @relation(fields: [DangerTagId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  padLocks PadLocks? @relation(fields: [PadLockId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  lockoutDevices LockoutDevices? @relation(fields: [LockOutDeviceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  equipment Equipment? @relation(fields: [EquipmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [AppliedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [AppliedSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_removaluser Users? @relation(fields: [RemovalUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_removalsignature Resources? @relation(fields: [RemovalSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_printeduser Users? @relation(fields: [PrintedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_reserveduser Users? @relation(fields: [ReservedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  lockoutDeviceTypes LockoutDeviceTypes? @relation(fields: [LockOutDeviceTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFILockBoxes RFILockBoxes? @relation(fields: [RFILockBoxId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  audits Audits? @relation(fields: [LastAuditId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFIIsolations")
 }
 
 model RFIJobs {
-  Id String?
-  RFIId String?
-  JobId String?
-  LinkingUserId String?
-  LinkingSignatureId String?
-  LinkingDate String?
-  DeLinkingUserId String?
-  DeLinkingSignatureId String?
-  DeLinkingDate String?
-  SetToWorkDate String?
-  SetToWorkCompleteSignatureId String?
-  SetToWorkCompleteDate String?
-  WorkCompleteDate String?
-  WorkCompleteSignatureId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  PercentageComplete String?
-  DeLinkingUserSnapshot String?
-  LinkingUserSnapshot String?
-  RFIJobState String?
+  Id String @id @default(uuid())
+  RFIId String @db.Uuid
+  JobId String @db.Uuid
+  LinkingUserId String? @db.Uuid
+  LinkingSignatureId String? @db.Uuid
+  LinkingDate DateTime
+  DeLinkingUserId String? @db.Uuid
+  DeLinkingSignatureId String? @db.Uuid
+  DeLinkingDate DateTime
+  SetToWorkDate DateTime
+  SetToWorkCompleteSignatureId String? @db.Uuid
+  SetToWorkCompleteDate DateTime
+  WorkCompleteDate DateTime
+  WorkCompleteSignatureId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  PercentageComplete Int
+  DeLinkingUserSnapshot String
+  LinkingUserSnapshot String
+  RFIJobState Int
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  jobs Jobs? @relation(fields: [JobId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [LinkingUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [LinkingSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_delinkinguser Users? @relation(fields: [DeLinkingUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_delinkingsignature Resources? @relation(fields: [DeLinkingSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_settoworkcompletesignature Resources? @relation(fields: [SetToWorkCompleteSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_workcompletesignature Resources? @relation(fields: [WorkCompleteSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFIJobs")
 }
 
 model RFILockBoxes {
-  Id String?
-  RFIId String?
-  SerialNumber String?
-  UserId String?
-  PadLockId String?
-  LockBoxAreaId String?
-  PadLockAreaId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  LockboxId String?
-  VerificationLockId String?
+  Id String @id @default(uuid())
+  RFIId String @db.Uuid
+  SerialNumber String
+  UserId String @db.Uuid
+  PadLockId String @db.Uuid
+  LockBoxAreaId String @db.Uuid
+  PadLockAreaId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  LockboxId String @db.Uuid
+  VerificationLockId String? @db.Uuid
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  padLocks PadLocks? @relation(fields: [PadLockId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  areas Areas? @relation(fields: [LockBoxAreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  areas_padlockarea Areas? @relation(fields: [PadLockAreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  lockboxes Lockboxes? @relation(fields: [LockboxId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  padLocks_verificationlock PadLocks? @relation(fields: [VerificationLockId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFILockBoxes")
 }
 
+model RFILockResource {
+  RFILocksId String @id
+  ResourcesId String @id
+  rFILocks RFILocks? @relation(fields: [RFILocksId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([RFILocksId, ResourcesId])
+
+  @@map("RFILockResource")
+}
+
 model RFILocks {
-  Id String?
-  RFIId String?
-  UserId String?
-  PadLockId String?
-  RFILockState String?
-  LockOnSignatureId String?
-  LockOnDate String?
-  LockOffSignatureId String?
-  LockOffDate String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  LockOnComment String?
-  LockOffComment String?
-  UserSnapshot String?
+  Id String @id @default(uuid())
+  RFIId String @db.Uuid
+  UserId String @db.Uuid
+  PadLockId String @db.Uuid
+  RFILockState Int
+  LockOnSignatureId String? @db.Uuid
+  LockOnDate DateTime
+  LockOffSignatureId String? @db.Uuid
+  LockOffDate DateTime
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  LockOnComment String
+  LockOffComment String
+  UserSnapshot String
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  padLocks PadLocks? @relation(fields: [PadLockId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [LockOnSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_lockoffsignature Resources? @relation(fields: [LockOffSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFILocks")
 }
 
 model RFILocksRFIJobs {
-  Id String?
-  RFILockId String?
-  RFIJobId String?
-  RFILockState String?
-  LockOnSignatureId String?
-  LockOnDate String?
-  LockOnComment String?
-  LockOffSignatureId String?
-  LockOffDate String?
-  LockOffComment String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  PercentageComplete String?
+  Id String @id @default(uuid())
+  RFILockId String @db.Uuid
+  RFIJobId String @db.Uuid
+  RFILockState Int
+  LockOnSignatureId String? @db.Uuid
+  LockOnDate DateTime
+  LockOnComment String
+  LockOffSignatureId String? @db.Uuid
+  LockOffDate DateTime
+  LockOffComment String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  PercentageComplete Int
+  rFILocks RFILocks? @relation(fields: [RFILockId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIJobs RFIJobs? @relation(fields: [RFIJobId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [LockOnSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_lockoffsignature Resources? @relation(fields: [LockOffSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFILocksRFIJobs")
 }
 
 model RFILogs {
-  Id String?
-  RFIId String?
-  Description String?
-  Comment String?
-  RFILogType String?
-  UserId String?
-  ResourceId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  PriorityExpiry String?
-  UserSnapshot String?
+  Id String @id @default(uuid())
+  RFIId String @db.Uuid
+  Description String
+  Comment String
+  RFILogType Int
+  UserId String @db.Uuid
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  PriorityExpiry DateTime?
+  UserSnapshot String
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFILogs")
 }
 
 model RFIResource {
-  RFIsId String?
-  ResourcesId String?
+  RFIsId String @id
+  ResourcesId String @id
+  rFIs RFIs? @relation(fields: [RFIsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([RFIsId, ResourcesId])
 
   @@map("RFIResource")
 }
 
 model RFISystem {
-  RFIsId String?
-  SystemsId String?
+  RFIsId String @id
+  SystemsId String @id
+  rFIs RFIs? @relation(fields: [RFIsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([RFIsId, SystemsId])
 
   @@map("RFISystem")
 }
 
 model RFIs {
-  Id String?
-  Description String?
-  RFINumber String?
-  RFIState String?
-  GroupId String?
-  DeveloperUserId String?
-  IsolationUserId String?
-  RFILockBoxId String?
-  ReservedUserId String?
-  ExpectedStartDate String?
-  ExpectedEndDate String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  AlteredState String?
-  Immediate String?
-  LockedUserId String?
-  ActivityId String?
-  Simple String?
-  RequestedUserId String?
-  DeveloperUserSnapshot String?
-  IsolationUserSnapshot String?
-  LockedUserSnapshot String?
-  RequestedUserSnapshot String?
-  ReservedUserSnapshot String?
-  VerificationRequired String?
-  CreatorUserId String?
-  CreatorUserSnapshot String?
+  Id String @id @default(uuid())
+  Description String
+  RFINumber String
+  RFIState Int
+  GroupId String? @db.Uuid
+  DeveloperUserId String @db.Uuid
+  IsolationUserId String? @db.Uuid
+  RFILockBoxId String? @db.Uuid
+  ReservedUserId String? @db.Uuid
+  ExpectedStartDate DateTime
+  ExpectedEndDate DateTime
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  AlteredState Boolean
+  Immediate Boolean
+  LockedUserId String? @db.Uuid
+  ActivityId String? @db.Uuid
+  Simple Boolean
+  RequestedUserId String? @db.Uuid
+  DeveloperUserSnapshot String
+  IsolationUserSnapshot String
+  LockedUserSnapshot String
+  RequestedUserSnapshot String
+  ReservedUserSnapshot String
+  VerificationRequired Boolean
+  CreatorUserId String @db.Uuid
+  CreatorUserSnapshot String
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [DeveloperUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_isolationuser Users? @relation(fields: [IsolationUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_reserveduser Users? @relation(fields: [ReservedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_lockeduser Users? @relation(fields: [LockedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  activities Activities? @relation(fields: [ActivityId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_requesteduser Users? @relation(fields: [RequestedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_creatoruser Users? @relation(fields: [CreatorUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("RFIs")
 }
 
 model ReasonCodes {
-  Id String?
-  Code String?
-  Name String?
-  Internal String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  Code String
+  Name String
+  Internal Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("ReasonCodes")
 }
 
+model ResourceSwMA {
+  ResourcesId String @id
+  SwMAsId String @id
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMAs SwMAs? @relation(fields: [SwMAsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([ResourcesId, SwMAsId])
+
+  @@map("ResourceSwMA")
+}
+
+model ResourceSwMACheck {
+  ResourcesId String @id
+  SwMAChecksId String @id
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMAChecks SwMAChecks? @relation(fields: [SwMAChecksId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([ResourcesId, SwMAChecksId])
+
+  @@map("ResourceSwMACheck")
+}
+
 model ResourceWorkPermit {
-  ResourcesId String?
-  WorkPermitsId String?
+  ResourcesId String @id
+  WorkPermitsId String @id
+  resources Resources? @relation(fields: [ResourcesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  workPermits WorkPermits? @relation(fields: [WorkPermitsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([ResourcesId, WorkPermitsId])
 
   @@map("ResourceWorkPermit")
 }
 
 model Resources {
-  Id String?
-  ResourceType String?
-  Description String?
-  ResourceData String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  MediaType String?
-  Comment String?
-  ResourceAllocation String?
-  ResourcePath String?
-  FileExtension String?
+  Id String @id @default(uuid())
+  ResourceType Int
+  Description String
+  ResourceData Bytes
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  MediaType String
+  Comment String
+  ResourceAllocation Int?
+  ResourcePath String
+  FileExtension String
 
   @@map("Resources")
 }
 
 model StandardActivities {
-  Id String?
-  StandardActivityNumber String?
-  DocumentNumber String?
-  SetToWorkRequired String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Description String?
-  FacilityCode String?
-  RevisionDate String?
-  RevisionNumber String?
+  Id String @id @default(uuid())
+  StandardActivityNumber String
+  DocumentNumber String
+  SetToWorkRequired Boolean
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Description String
+  FacilityCode String
+  RevisionDate DateTime
+  RevisionNumber String
 
   @@map("StandardActivities")
 }
 
+model StandardActivityItems {
+  Id String @id @default(uuid())
+  StandardActivityId String @db.Uuid
+  Index Int
+  Comment String
+  StandardActivityItemType Int
+  IsolationPointId String? @db.Uuid
+  EquipmentId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  standardActivities StandardActivities? @relation(fields: [StandardActivityId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  equipment Equipment? @relation(fields: [EquipmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("StandardActivityItems")
+}
+
 model StandardActivitySystem {
-  StandardActivitesId String?
-  SystemsId String?
+  StandardActivitesId String @id
+  SystemsId String @id
+  standardActivities StandardActivities? @relation(fields: [StandardActivitesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([StandardActivitesId, SystemsId])
 
   @@map("StandardActivitySystem")
 }
 
+model SwMAChecks {
+  Id String @id @default(uuid())
+  SwMAId String @db.Uuid
+  CheckListTemplateItemId String @db.Uuid
+  Index Int
+  SwMACheckType Int
+  AssessorId String @db.Uuid
+  Note String
+  EnergyRecordedValue Decimal
+  EnergyRecordedType Int
+  DefectFound Boolean
+  DefectDescription String
+  CheckListTemplateItemError Boolean
+  CheckListTemplateItemDesc String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Completed DateTime?
+  swMAs SwMAs? @relation(fields: [SwMAId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  checkListTemplateItems CheckListTemplateItems? @relation(fields: [CheckListTemplateItemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [AssessorId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("SwMAChecks")
+}
+
+model SwMAJobsAdditionalDefects {
+  AdditionalDefectsId String @id
+  SwMAAdditionalDefectsId String @id
+  jobs Jobs? @relation(fields: [AdditionalDefectsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMAs SwMAs? @relation(fields: [SwMAAdditionalDefectsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AdditionalDefectsId, SwMAAdditionalDefectsId])
+
+  @@map("SwMAJobsAdditionalDefects")
+}
+
+model SwMAJobsPreExistingDefects {
+  PreExistingDefectsId String @id
+  SwMAExistingDefectsId String @id
+  jobs Jobs? @relation(fields: [PreExistingDefectsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMAs SwMAs? @relation(fields: [SwMAExistingDefectsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([PreExistingDefectsId, SwMAExistingDefectsId])
+
+  @@map("SwMAJobsPreExistingDefects")
+}
+
+model SwMALogs {
+  Id String @id @default(uuid())
+  SwMAId String @db.Uuid
+  Description String
+  Comment String
+  SwMALogType Int
+  UserId String @db.Uuid
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  DateTimeCompleted DateTime
+  DateTimeStarted DateTime
+  swMAs SwMAs? @relation(fields: [SwMAId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("SwMALogs")
+}
+
+model SwMARegisters {
+  Id String @id @default(uuid())
+  GroupClassId String @db.Uuid
+  GroupVesselId String @db.Uuid
+  Comment String
+  EventStartDate DateTime
+  EventEndDate DateTime
+  SwMACoordinatorId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Active Boolean
+  groups Groups? @relation(fields: [GroupClassId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  groups_groupvessel Groups? @relation(fields: [GroupVesselId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [SwMACoordinatorId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("SwMARegisters")
+}
+
+model SwMASAssessors {
+  AssessorsId String @id
+  SwMASId String @id
+  users Users? @relation(fields: [AssessorsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMAs SwMAs? @relation(fields: [SwMASId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([AssessorsId, SwMASId])
+
+  @@map("SwMASAssessors")
+}
+
+model SwMATemplateDepartments {
+  DepartmentsId String @id
+  SwMATemplatesId String @id
+  departments Departments? @relation(fields: [DepartmentsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMATemplates SwMATemplates? @relation(fields: [SwMATemplatesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([DepartmentsId, SwMATemplatesId])
+
+  @@map("SwMATemplateDepartments")
+}
+
+model SwMATemplateItems {
+  Id String @id @default(uuid())
+  Index Int
+  SwMATemplateId String @db.Uuid
+  CheckListTemplateItemId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  swMATemplates SwMATemplates? @relation(fields: [SwMATemplateId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  checkListTemplateItems CheckListTemplateItems? @relation(fields: [CheckListTemplateItemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("SwMATemplateItems")
+}
+
+model SwMATemplates {
+  Id String @id @default(uuid())
+  Name String
+  Version String
+  SwMATemplateType Int
+  AreaId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SystemId String? @db.Uuid
+  SwMANumber String
+  GroupId String @db.Uuid
+  areas Areas? @relation(fields: [AreaId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systems Systems? @relation(fields: [SystemId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("SwMATemplates")
+}
+
+model SwMAs {
+  Id String @id @default(uuid())
+  SwMARegisterId String @db.Uuid
+  SwMATemplateId String @db.Uuid
+  SwMAEventTrigger Int
+  SwMANumber String
+  SwMAState Int
+  Defects Boolean
+  HRAStatus Int
+  SwMACoordinatorId String? @db.Uuid
+  SupervisorId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  DepartmentId String @db.Uuid
+  ReservedUserId String? @db.Uuid
+  ActualTotalMins Int
+  QuotedTotalMins Int
+  CompletedDate DateTime?
+  DeferredDate DateTime?
+  swMARegisters SwMARegisters? @relation(fields: [SwMARegisterId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  swMATemplates SwMATemplates? @relation(fields: [SwMATemplateId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [SwMACoordinatorId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_supervisor Users? @relation(fields: [SupervisorId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  departments Departments? @relation(fields: [DepartmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_reserveduser Users? @relation(fields: [ReservedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("SwMAs")
+}
+
 model SystemCategories {
-  Id String?
-  Name String?
-  Description String?
-  Colour String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  Colour String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("SystemCategories")
 }
 
 model SystemTypes {
-  Id String?
-  Name String?
-  Description String?
-  Colour String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  Name String
+  Description String
+  Colour String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("SystemTypes")
 }
 
 model SystemTypesDepartments {
-  DepartmentsId String?
-  SystemTypesId String?
+  DepartmentsId String @id
+  SystemTypesId String @id
+  departments Departments? @relation(fields: [DepartmentsId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systemTypes SystemTypes? @relation(fields: [SystemTypesId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([DepartmentsId, SystemTypesId])
 
   @@map("SystemTypesDepartments")
 }
 
 model Systems {
-  Id String?
-  ParentId String?
-  Name String?
-  Description String?
-  Code String?
-  SystemTypeId String?
-  SystemCategoryId String?
-  DepartmentId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  ParentId String? @db.Uuid
+  Name String
+  Description String
+  Code String
+  SystemTypeId String @db.Uuid
+  SystemCategoryId String @db.Uuid
+  DepartmentId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  systems Systems? @relation(fields: [ParentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systemTypes SystemTypes? @relation(fields: [SystemTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  systemCategories SystemCategories? @relation(fields: [SystemCategoryId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  departments Departments? @relation(fields: [DepartmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Systems")
 }
 
 model TemporaryTagLogs {
-  Id String?
-  TemporaryTagId String?
-  Description String?
-  Comment String?
-  TemporaryTagLogType String?
-  UserId String?
-  ResourceId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  UserSnapshot String?
+  Id String @id @default(uuid())
+  TemporaryTagId String @db.Uuid
+  Description String
+  Comment String
+  TemporaryTagLogType Int
+  UserId String @db.Uuid
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  UserSnapshot String
+  temporaryTags TemporaryTags? @relation(fields: [TemporaryTagId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("TemporaryTagLogs")
 }
 
 model TemporaryTags {
-  Id String?
-  RFIId String?
-  IsolationPointId String?
-  EquipmentId String?
-  TemporaryTagState String?
-  Notes String?
-  TemporaryTagNumber String?
-  AppliedUserId String?
-  AppliedSignatureId String?
-  AppliedDate String?
-  RemovalUserId String?
-  RemovalSignatureId String?
-  RemovalDate String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  AppliedState String?
-  AppliedUserSnapshot String?
-  RemovalUserSnapshot String?
+  Id String @id @default(uuid())
+  RFIId String? @db.Uuid
+  IsolationPointId String? @db.Uuid
+  EquipmentId String? @db.Uuid
+  TemporaryTagState Int
+  Notes String
+  TemporaryTagNumber String
+  AppliedUserId String? @db.Uuid
+  AppliedSignatureId String? @db.Uuid
+  AppliedDate DateTime
+  RemovalUserId String? @db.Uuid
+  RemovalSignatureId String? @db.Uuid
+  RemovalDate DateTime
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  AppliedState Int
+  AppliedUserSnapshot String
+  RemovalUserSnapshot String
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  isolationPoints IsolationPoints? @relation(fields: [IsolationPointId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  equipment Equipment? @relation(fields: [EquipmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [AppliedUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [AppliedSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_removaluser Users? @relation(fields: [RemovalUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources_removalsignature Resources? @relation(fields: [RemovalSignatureId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("TemporaryTags")
 }
 
 model UserLoginHistory {
-  Id String?
-  UserId String?
-  LoginTime String?
-  LogoutTime String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  SessionId String?
+  Id String @id @default(uuid())
+  UserId String @db.Uuid
+  LoginTime DateTime
+  LogoutTime DateTime?
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  SessionId String @db.Uuid
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("UserLoginHistory")
 }
 
 model UserLogins {
-  Id String?
-  LastLogin String?
-  LastPasswordChange String?
-  PasswordSalt String?
-  PasswordHash String?
-  LastPasswordSalt String?
-  LastPasswordHash String?
-  UserLoginStates String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
+  Id String @id @default(uuid())
+  LastLogin DateTime
+  LastPasswordChange DateTime
+  PasswordSalt Bytes
+  PasswordHash Bytes
+  LastPasswordSalt Bytes?
+  LastPasswordHash Bytes?
+  UserLoginStates Int
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
 
   @@map("UserLogins")
 }
 
 model UserLogs {
-  Id String?
-  UserId String?
-  Description String?
-  Comment String?
-  UserLogType String?
-  LogAuthorUserId String?
-  ResourceId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  LogAuthorUserSnapshot String?
-  UserSnapshot String?
+  Id String @id @default(uuid())
+  UserId String @db.Uuid
+  Description String
+  Comment String
+  UserLogType Int
+  LogAuthorUserId String @db.Uuid
+  ResourceId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  LogAuthorUserSnapshot String
+  UserSnapshot String
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_logauthoruser Users? @relation(fields: [LogAuthorUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  resources Resources? @relation(fields: [ResourceId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("UserLogs")
 }
 
 model UserPermissions {
-  UserId String?
-  PermissionId String?
-  Override String?
+  UserId String @id
+  PermissionId String @id
+  Override Boolean
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  permissions Permissions? @relation(fields: [PermissionId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([UserId, PermissionId])
 
   @@map("UserPermissions")
 }
 
 model UserRolePermissions {
-  UserRoleId String?
-  PermissionId String?
+  UserRoleId String @id
+  PermissionId String @id
+  userRoles UserRoles? @relation(fields: [UserRoleId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  permissions Permissions? @relation(fields: [PermissionId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  @@id([UserRoleId, PermissionId])
 
   @@map("UserRolePermissions")
 }
 
 model UserRoles {
-  Id String?
-  Name String?
-  Permissions String?
-  RoleLevel String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  DeactivatedBy String?
-  DeactivatedDate String?
-  ReadOnly String?
+  Id String @id @default(uuid())
+  Name String
+  Permissions Decimal
+  RoleLevel Int
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  ReadOnly Boolean
 
   @@map("UserRoles")
 }
 
 model Users {
-  Id String?
-  FirstName String?
-  LastName String?
-  UserName String?
-  Mobile String?
-  Email String?
-  Address String?
-  BadgeSerialNumber String?
-  Position String?
-  Permissions String?
-  GroupId String?
-  UserRoleId String?
-  DepartmentId String?
-  UserLoginId String?
-  CompanyId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Competencies String?
-  ProfileImage String?
-  Signature String?
-  DeactivatedBy String?
-  DeactivatedDate String?
-  AccountLocked String?
-  AccountLockedDate String?
-  LoginAttempts String?
+  Id String @id @default(uuid())
+  FirstName String
+  LastName String
+  UserName String
+  Mobile String
+  Email String
+  Address String
+  BadgeSerialNumber String
+  Position String
+  Permissions Decimal
+  GroupId String? @db.Uuid
+  UserRoleId String @db.Uuid
+  DepartmentId String? @db.Uuid
+  UserLoginId String? @db.Uuid
+  CompanyId String @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Competencies Decimal
+  ProfileImage Bytes?
+  Signature Bytes?
+  DeactivatedBy String? @db.Uuid
+  DeactivatedDate DateTime?
+  AccountLocked Boolean
+  AccountLockedDate DateTime?
+  LoginAttempts Int
+  groups Groups? @relation(fields: [GroupId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  userRoles UserRoles? @relation(fields: [UserRoleId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  departments Departments? @relation(fields: [DepartmentId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  userLogins UserLogins? @relation(fields: [UserLoginId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  companies Companies? @relation(fields: [CompanyId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("Users")
 }
 
 model WorkPermitTypes {
-  Id String?
-  Name String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  Prefix String?
+  Id String @id @default(uuid())
+  Name String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  Prefix String
 
   @@map("WorkPermitTypes")
 }
 
 model WorkPermits {
-  Id String?
-  WorkPermitTypeId String?
-  RFIId String?
-  JobId String?
-  UserId String?
-  Description String?
-  AcknowledgedBySignatureId String?
-  CreatedDate String?
-  ModifiedDate String?
-  DeletedDate String?
-  CreatedBy String?
-  ModifiedBy String?
-  DeletedBy String?
-  UserSnapshot String?
-  AcknowledgedById String?
+  Id String @id @default(uuid())
+  WorkPermitTypeId String @db.Uuid
+  RFIId String? @db.Uuid
+  JobId String? @db.Uuid
+  UserId String? @db.Uuid
+  Description String
+  AcknowledgedBySignatureId String? @db.Uuid
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+  UserSnapshot String
+  AcknowledgedById String? @db.Uuid
   AcknowledgedBySnapshot String?
-  AcknowledgedDate String?
+  AcknowledgedDate DateTime?
   AcknowledgedComment String?
-  ClosureUserId String?
+  ClosureUserId String? @db.Uuid
   ClosureComment String?
-  ClosureDate String?
-  ClosureSignatureId String?
+  ClosureDate DateTime?
+  ClosureSignatureId String? @db.Uuid
   ClosureUserSnapshot String?
-  State String?
+  State Int
+  workPermitTypes WorkPermitTypes? @relation(fields: [WorkPermitTypeId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  rFIs RFIs? @relation(fields: [RFIId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  jobs Jobs? @relation(fields: [JobId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users Users? @relation(fields: [UserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_acknowledgedby Users? @relation(fields: [AcknowledgedById], references: [Id], onDelete: NoAction, onUpdate: NoAction)
+  users_closureuser Users? @relation(fields: [ClosureUserId], references: [Id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("WorkPermits")
+}
+
+model Zones {
+  Id String @id @default(uuid())
+  Name String
+  ZoneType Int
+  SerialisedBounds String
+  CreatedDate DateTime
+  ModifiedDate DateTime?
+  DeletedDate DateTime?
+  CreatedBy String @db.Uuid
+  ModifiedBy String? @db.Uuid
+  DeletedBy String? @db.Uuid
+
+  @@map("Zones")
+}
+
+model __EFMigrationsHistory {
+  MigrationId String @id
+  ProductVersion String
+
+  @@map("__EFMigrationsHistory")
 }
