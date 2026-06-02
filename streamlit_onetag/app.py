@@ -173,7 +173,7 @@ def jobs_isolations_equipment(date_from=None, date_to=None, iso=None, equip=None
               INNER JOIN IsolationPoints i ON ri.IsolationPointId = i.Id
               INNER JOIN Areas ia ON i.AreaId = ia.Id
               INNER JOIN Equipment e ON ri.EquipmentId = e.Id
-              INNER JOIN Areas ea ON ri.AreaId = ea.Id
+              INNER JOIN Areas ea ON e.AreaId = ea.Id
               {where} ORDER BY j.JobNumber"""
     return sql, params
 
@@ -348,9 +348,9 @@ def sankey_lock_chain():
         INNER JOIN Users u ON rl.UserId = u.Id AND u.DeletedDate IS NULL
         INNER JOIN RFIJobs rj ON rlrj.RFIJobId = rj.Id
         INNER JOIN RFIs r ON rj.RFIId = r.Id AND r.DeletedDate IS NULL
-        LEFT OUTER JOIN RFILockBoxes rlb ON r.Id = rlb.RFIId
-        WHERE rlrj.LockOffDate IS NULL AND rlrj.DeletedDate IS NULL
-          AND rlb.SerialNumber IS NOT NULL
+        INNER JOIN RFILockBoxes rlb ON r.Id = rlb.RFIId
+        WHERE rlrj.DeletedDate IS NULL AND rlb.SerialNumber IS NOT NULL
+        ORDER BY rlrj.LockOnDate DESC
     """)
     if not rows:
         return None
@@ -370,7 +370,7 @@ def sankey_lock_chain():
         link=dict(source=[idx_map[r["source"]] for _, r in agg.iterrows()],
                   target=[idx_map[r["target"]] for _, r in agg.iterrows()],
                   value=[r["value"] for _, r in agg.iterrows()])))
-    fig.update_layout(title="Active Lock Chain: Worker → Padlock → LockBox → RFI", font_size=11)
+    fig.update_layout(title="Lock Chain: Worker → Padlock → LockBox → RFI (last 500)", font_size=11)
     return apply_theme(fig)
 
 
@@ -630,7 +630,7 @@ def page_analysis(flt):
         st.subheader("Lock Chain Sankey")
         fig2 = sankey_lock_chain()
         if fig2: st.plotly_chart(fig2, use_container_width=True)
-        else: st.info("No active lock chains found (all locks released or no lock box).")
+        else: st.info("No lock chains with LockBox assignments found in recent data.")
         st.subheader("Vendor → Equipment Sankey")
         fig3 = sankey_vendor_equipment()
         if fig3: st.plotly_chart(fig3, use_container_width=True)
@@ -652,7 +652,7 @@ def page_analysis(flt):
             elif report == "Daily Activity Timeline (90 days)":
                 df = query_df("""SELECT CAST(l.CreatedDate AS DATE) AS EventDate, l.RFILogType, COUNT(*) AS EventCount FROM RFILogs l WHERE l.CreatedDate >= DATEADD(DAY, -90, GETUTCDATE()) GROUP BY CAST(l.CreatedDate AS DATE), l.RFILogType ORDER BY EventDate"""); fig = chart_daily_timeline(df)
             elif report == "Top 20 Most Locked Equipment":
-                df = query_df("""SELECT TOP 20 e.Name AS Equipment, ea.Name AS Area, COUNT(DISTINCT ri.RFIId) AS RFICount FROM Equipment e INNER JOIN RFIIsolations ri ON e.Id = ri.EquipmentId AND ri.DeletedDate IS NULL LEFT JOIN Areas ea ON ri.AreaId = ea.Id WHERE e.DeletedDate IS NULL GROUP BY e.Name, ea.Name ORDER BY RFICount DESC"""); fig = None
+                df = query_df("""SELECT TOP 20 e.Name AS Equipment, ea.Name AS Area, COUNT(DISTINCT ri.RFIId) AS RFICount FROM Equipment e INNER JOIN RFIIsolations ri ON e.Id = ri.EquipmentId AND ri.DeletedDate IS NULL LEFT JOIN Areas ea ON e.AreaId = ea.Id WHERE e.DeletedDate IS NULL GROUP BY e.Name, ea.Name ORDER BY RFICount DESC"""); fig = None
         if not df.empty:
             st.dataframe(df, use_container_width=True, height=400)
         if fig:
