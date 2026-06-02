@@ -1,0 +1,1192 @@
+// OneTag HMAS Sydney — Auto-generated Prisma Schema
+// Source: SQL Server database exported to SQLite
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Activities {
+  Id String?
+  GroupVesselId String?
+  Number String?
+  Comment String?
+  Active String?
+  ActivityStartDate String?
+  ActivityEndDate String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("Activities")
+}
+
+model AreaTypes {
+  Id String?
+  Name String?
+  Description String?
+  SecureArea String?
+  HighRisk String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("AreaTypes")
+}
+
+model Areas {
+  Id String?
+  Name String?
+  Description String?
+  Code String?
+  GroupId String?
+  AreaTypeId String?
+  DepartmentId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  SerialisedBounds String?
+  SerialisedOrigin String?
+  ParentAreaId String?
+
+  @@map("Areas")
+}
+
+model AssetTypes {
+  Id String?
+  Name String?
+  Description String?
+  Flags String?
+  TotalCount String?
+  TotalInUse String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("AssetTypes")
+}
+
+model AuditCheckResource {
+  AuditChecksId String?
+  ResourcesId String?
+
+  @@map("AuditCheckResource")
+}
+
+model AuditChecks {
+  Id String?
+  AuditId String?
+  RFIIsolationId String?
+  RFIJobId String?
+  AuditCheckType String?
+  DefectFound String?
+  DefectDescription String?
+  ActionsTaken String?
+  ActionsDescription String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  TemporaryTagId String?
+  CheckQuestion String?
+  RFIId String?
+  AuditCheckDate String?
+
+  @@map("AuditChecks")
+}
+
+model AuditDefects {
+  Id String?
+  AuditId String?
+  IsolationPointId String?
+  DefectDescription String?
+  AuditDefectDate String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("AuditDefects")
+}
+
+model AuditLogs {
+  Id String?
+  AuditId String?
+  Description String?
+  Comment String?
+  AuditLogType String?
+  UserId String?
+  ResourceId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  PriorityExpiry String?
+  UserSnapshot String?
+
+  @@map("AuditLogs")
+}
+
+model AuditRFIIsolationSnapshots {
+  Id String?
+  AuditId String?
+  RFIIsolationId String?
+  ResourceId String?
+
+  @@map("AuditRFIIsolationSnapshots")
+}
+
+model AuditRFIIsolations {
+  AuditsId String?
+  RFIIsolationsId String?
+
+  @@map("AuditRFIIsolations")
+}
+
+model AuditRFIs {
+  AuditsId String?
+  RFIsId String?
+
+  @@map("AuditRFIs")
+}
+
+model Audits {
+  Id String?
+  Name String?
+  Description String?
+  AuditType String?
+  AuditState String?
+  EventStartDate String?
+  EventEndDate String?
+  ActivityId String?
+  ReservedUserId String?
+  DateCompleted String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Defects String?
+  DateApproved String?
+  ApprovedUserId String?
+  ApprovedUserSnapshot String?
+  ReservedUserSnapshot String?
+  DateSignOff String?
+  SignOffUserId String?
+  SignOffUserSnapshot String?
+
+  @@map("Audits")
+}
+
+model BoundaryTemplateItems {
+  Id String?
+  BoundaryTemplateId String?
+  Index String?
+  Comment String?
+  IsolationPointId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  AppliedState String?
+  EquipmentId String?
+  HoldPoint String?
+  DraftCreated String?
+
+  @@map("BoundaryTemplateItems")
+}
+
+model BoundaryTemplateLogs {
+  Id String?
+  BoundaryTemplateId String?
+  Description String?
+  Comment String?
+  BoundaryTemplateLogType String?
+  UserId String?
+  UserSnapshot String?
+  ResourceId String?
+  PriorityExpiry String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("BoundaryTemplateLogs")
+}
+
+model BoundaryTemplateSystem {
+  BoundaryTemplatesId String?
+  SystemsId String?
+
+  @@map("BoundaryTemplateSystem")
+}
+
+model BoundaryTemplates {
+  Id String?
+  Name String?
+  Description String?
+  BoundaryTemplateType String?
+  UserId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Version String?
+  OnHold String?
+  CreatorUserId String?
+  CreatorUserSnapshot String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+  LastModifiedUserId String?
+  LastModifiedUserSnapshot String?
+  Imported String?
+
+  @@map("BoundaryTemplates")
+}
+
+model Companies {
+  Id String?
+  Name String?
+  Phone String?
+  Email String?
+  ContactPerson String?
+  Address String?
+  GroupId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Code String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+
+  @@map("Companies")
+}
+
+model DangerTag {
+  Id String?
+  TagNumber String?
+  SerialNumber String?
+  TrackingEnabled String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  PrintCount String?
+
+  @@map("DangerTag")
+}
+
+model Departments {
+  Id String?
+  Name String?
+  Description String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  ParentDepartmentId String?
+
+  @@map("Departments")
+}
+
+model Equipment {
+  Id String?
+  Name String?
+  SerialNumber String?
+  Description String?
+  AreaId String?
+  SystemId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  SerialisedPosition String?
+
+  @@map("Equipment")
+}
+
+model EquipmentIsolations {
+  EquipmentId String?
+  IsolationPointId String?
+  Id String?
+  Notes String?
+  Secondary String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("EquipmentIsolations")
+}
+
+model GroupTypes {
+  Id String?
+  Name String?
+  Description String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("GroupTypes")
+}
+
+model Groups {
+  Id String?
+  ParentId String?
+  GroupTypeId String?
+  Name String?
+  Description String?
+  Code String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  CoordinateSystemId String?
+  MapId String?
+
+  @@map("Groups")
+}
+
+model IsolationPointChecks {
+  Id String?
+  IsolationPointTypeId String?
+  IsolationPointId String?
+  Name String?
+  Mandatory String?
+  Order String?
+  DisplayText String?
+  BooleanType String?
+  DefaultValue String?
+  IsolationPointStates String?
+  MovingToStates String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("IsolationPointChecks")
+}
+
+model IsolationPointLogs {
+  Id String?
+  IsolationPointId String?
+  Description String?
+  IsolationPointLogType String?
+  UserId String?
+  ResourceId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Comment String?
+  UserSnapshot String?
+
+  @@map("IsolationPointLogs")
+}
+
+model IsolationPointTypes {
+  Id String?
+  Name String?
+  Description String?
+  IsolationType String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("IsolationPointTypes")
+}
+
+model IsolationPoints {
+  Id String?
+  IsolationPointStatus String?
+  Name String?
+  FLOC String?
+  TallyPlate String?
+  Description String?
+  DeactiveState String?
+  ActiveState String?
+  CurrentState String?
+  IsolationPointTypeId String?
+  AreaId String?
+  SubAreaId String?
+  CriticalSystem String?
+  HighRiskPlant String?
+  Lockable String?
+  PreferredPadLockTypeId String?
+  ValidationPossible String?
+  ValidationMethod String?
+  EnergyPotentialValue String?
+  EnergyPotentialType String?
+  EnergyPotentialSubValue String?
+  EnergyPotentialSubValueType String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  SerialisedPosition String?
+  SystemId String?
+  UID String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+  DefectReported String?
+  Version String?
+  DefectDescription String?
+  EnergyPotential String?
+  OneTagDisplayName String?
+  SufficientIsolation String?
+  AlternateLockoutDeviceTypeId String?
+  PreferredLockoutDeviceTypeId String?
+  CreatorUserId String?
+  CreatorUserSnapshot String?
+  LastModifiedUserId String?
+  LastModifiedUserSnapshot String?
+
+  @@map("IsolationPoints")
+}
+
+model JobLogs {
+  Id String?
+  JobId String?
+  JobLogType String?
+  Description String?
+  Comment String?
+  UserId String?
+  UserSnapshot String?
+  ResourceId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("JobLogs")
+}
+
+model Jobs {
+  Id String?
+  CompanyId String?
+  JobNumber String?
+  NoteNumber String?
+  Description String?
+  ReasonCodeId String?
+  SystemId String?
+  StandardActivityId String?
+  PlannedStartDate String?
+  PlannedEndDate String?
+  InternalTask String?
+  JobState String?
+  SetToWorkRequired String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  ActivityId String?
+  GroupId String?
+  DepartmentId String?
+  ControlledJob String?
+  OnHold String?
+
+  @@map("Jobs")
+}
+
+model Lockboxes {
+  Id String?
+  SerialNumber String?
+  RFIId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+
+  @@map("Lockboxes")
+}
+
+model LockoutDeviceTypes {
+  Id String?
+  Name String?
+  Colour String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  TotalCount String?
+  TotalInUse String?
+
+  @@map("LockoutDeviceTypes")
+}
+
+model PadLockTypes {
+  Id String?
+  Name String?
+  Colour String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  PersonalLock String?
+  VerificationLock String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+
+  @@map("PadLockTypes")
+}
+
+model PadLocks {
+  Id String?
+  SerialNumber String?
+  PadLockTypeId String?
+  UserId String?
+  TrackingEnabled String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Active String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+
+  @@map("PadLocks")
+}
+
+model PermissionGroups {
+  Id String?
+  Name String?
+  Description String?
+  IsSystem String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  SortOrder String?
+
+  @@map("PermissionGroups")
+}
+
+model Permissions {
+  Id String?
+  Key String?
+  Name String?
+  Description String?
+  IsActive String?
+  PermissionGroupId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  SortOrder String?
+
+  @@map("Permissions")
+}
+
+model RFIIsolationResource {
+  IsolationsId String?
+  ResourcesId String?
+
+  @@map("RFIIsolationResource")
+}
+
+model RFIIsolations {
+  Id String?
+  RFIId String?
+  IsolationPointId String?
+  DangerTagId String?
+  PadLockId String?
+  LockOutDeviceId String?
+  EquipmentId String?
+  RFIIsolationState String?
+  Description String?
+  AppliedState String?
+  AppliedUserId String?
+  AppliedSignatureId String?
+  AppliedDate String?
+  RemovalState String?
+  RemovalUserId String?
+  RemovalSignatureId String?
+  RemovalDate String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  HighRisk String?
+  HoldPoint String?
+  Index String?
+  Printed String?
+  PrintedUserId String?
+  ReservedUserId String?
+  LockOutDeviceTypeId String?
+  RFILockBoxId String?
+  LastAuditId String?
+  AppliedUserSnapshot String?
+  PrintedUserSnapshot String?
+  RemovalUserSnapshot String?
+  ReservedUserSnapshot String?
+
+  @@map("RFIIsolations")
+}
+
+model RFIJobs {
+  Id String?
+  RFIId String?
+  JobId String?
+  LinkingUserId String?
+  LinkingSignatureId String?
+  LinkingDate String?
+  DeLinkingUserId String?
+  DeLinkingSignatureId String?
+  DeLinkingDate String?
+  SetToWorkDate String?
+  SetToWorkCompleteSignatureId String?
+  SetToWorkCompleteDate String?
+  WorkCompleteDate String?
+  WorkCompleteSignatureId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  PercentageComplete String?
+  DeLinkingUserSnapshot String?
+  LinkingUserSnapshot String?
+  RFIJobState String?
+
+  @@map("RFIJobs")
+}
+
+model RFILockBoxes {
+  Id String?
+  RFIId String?
+  SerialNumber String?
+  UserId String?
+  PadLockId String?
+  LockBoxAreaId String?
+  PadLockAreaId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  LockboxId String?
+  VerificationLockId String?
+
+  @@map("RFILockBoxes")
+}
+
+model RFILocks {
+  Id String?
+  RFIId String?
+  UserId String?
+  PadLockId String?
+  RFILockState String?
+  LockOnSignatureId String?
+  LockOnDate String?
+  LockOffSignatureId String?
+  LockOffDate String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  LockOnComment String?
+  LockOffComment String?
+  UserSnapshot String?
+
+  @@map("RFILocks")
+}
+
+model RFILocksRFIJobs {
+  Id String?
+  RFILockId String?
+  RFIJobId String?
+  RFILockState String?
+  LockOnSignatureId String?
+  LockOnDate String?
+  LockOnComment String?
+  LockOffSignatureId String?
+  LockOffDate String?
+  LockOffComment String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  PercentageComplete String?
+
+  @@map("RFILocksRFIJobs")
+}
+
+model RFILogs {
+  Id String?
+  RFIId String?
+  Description String?
+  Comment String?
+  RFILogType String?
+  UserId String?
+  ResourceId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  PriorityExpiry String?
+  UserSnapshot String?
+
+  @@map("RFILogs")
+}
+
+model RFIResource {
+  RFIsId String?
+  ResourcesId String?
+
+  @@map("RFIResource")
+}
+
+model RFISystem {
+  RFIsId String?
+  SystemsId String?
+
+  @@map("RFISystem")
+}
+
+model RFIs {
+  Id String?
+  Description String?
+  RFINumber String?
+  RFIState String?
+  GroupId String?
+  DeveloperUserId String?
+  IsolationUserId String?
+  RFILockBoxId String?
+  ReservedUserId String?
+  ExpectedStartDate String?
+  ExpectedEndDate String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  AlteredState String?
+  Immediate String?
+  LockedUserId String?
+  ActivityId String?
+  Simple String?
+  RequestedUserId String?
+  DeveloperUserSnapshot String?
+  IsolationUserSnapshot String?
+  LockedUserSnapshot String?
+  RequestedUserSnapshot String?
+  ReservedUserSnapshot String?
+  VerificationRequired String?
+  CreatorUserId String?
+  CreatorUserSnapshot String?
+
+  @@map("RFIs")
+}
+
+model ReasonCodes {
+  Id String?
+  Code String?
+  Name String?
+  Internal String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("ReasonCodes")
+}
+
+model ResourceWorkPermit {
+  ResourcesId String?
+  WorkPermitsId String?
+
+  @@map("ResourceWorkPermit")
+}
+
+model Resources {
+  Id String?
+  ResourceType String?
+  Description String?
+  ResourceData String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  MediaType String?
+  Comment String?
+  ResourceAllocation String?
+  ResourcePath String?
+  FileExtension String?
+
+  @@map("Resources")
+}
+
+model StandardActivities {
+  Id String?
+  StandardActivityNumber String?
+  DocumentNumber String?
+  SetToWorkRequired String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Description String?
+  FacilityCode String?
+  RevisionDate String?
+  RevisionNumber String?
+
+  @@map("StandardActivities")
+}
+
+model StandardActivitySystem {
+  StandardActivitesId String?
+  SystemsId String?
+
+  @@map("StandardActivitySystem")
+}
+
+model SystemCategories {
+  Id String?
+  Name String?
+  Description String?
+  Colour String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("SystemCategories")
+}
+
+model SystemTypes {
+  Id String?
+  Name String?
+  Description String?
+  Colour String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("SystemTypes")
+}
+
+model SystemTypesDepartments {
+  DepartmentsId String?
+  SystemTypesId String?
+
+  @@map("SystemTypesDepartments")
+}
+
+model Systems {
+  Id String?
+  ParentId String?
+  Name String?
+  Description String?
+  Code String?
+  SystemTypeId String?
+  SystemCategoryId String?
+  DepartmentId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("Systems")
+}
+
+model TemporaryTagLogs {
+  Id String?
+  TemporaryTagId String?
+  Description String?
+  Comment String?
+  TemporaryTagLogType String?
+  UserId String?
+  ResourceId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  UserSnapshot String?
+
+  @@map("TemporaryTagLogs")
+}
+
+model TemporaryTags {
+  Id String?
+  RFIId String?
+  IsolationPointId String?
+  EquipmentId String?
+  TemporaryTagState String?
+  Notes String?
+  TemporaryTagNumber String?
+  AppliedUserId String?
+  AppliedSignatureId String?
+  AppliedDate String?
+  RemovalUserId String?
+  RemovalSignatureId String?
+  RemovalDate String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  AppliedState String?
+  AppliedUserSnapshot String?
+  RemovalUserSnapshot String?
+
+  @@map("TemporaryTags")
+}
+
+model UserLoginHistory {
+  Id String?
+  UserId String?
+  LoginTime String?
+  LogoutTime String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  SessionId String?
+
+  @@map("UserLoginHistory")
+}
+
+model UserLogins {
+  Id String?
+  LastLogin String?
+  LastPasswordChange String?
+  PasswordSalt String?
+  PasswordHash String?
+  LastPasswordSalt String?
+  LastPasswordHash String?
+  UserLoginStates String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+
+  @@map("UserLogins")
+}
+
+model UserLogs {
+  Id String?
+  UserId String?
+  Description String?
+  Comment String?
+  UserLogType String?
+  LogAuthorUserId String?
+  ResourceId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  LogAuthorUserSnapshot String?
+  UserSnapshot String?
+
+  @@map("UserLogs")
+}
+
+model UserPermissions {
+  UserId String?
+  PermissionId String?
+  Override String?
+
+  @@map("UserPermissions")
+}
+
+model UserRolePermissions {
+  UserRoleId String?
+  PermissionId String?
+
+  @@map("UserRolePermissions")
+}
+
+model UserRoles {
+  Id String?
+  Name String?
+  Permissions String?
+  RoleLevel String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+  ReadOnly String?
+
+  @@map("UserRoles")
+}
+
+model Users {
+  Id String?
+  FirstName String?
+  LastName String?
+  UserName String?
+  Mobile String?
+  Email String?
+  Address String?
+  BadgeSerialNumber String?
+  Position String?
+  Permissions String?
+  GroupId String?
+  UserRoleId String?
+  DepartmentId String?
+  UserLoginId String?
+  CompanyId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Competencies String?
+  ProfileImage String?
+  Signature String?
+  DeactivatedBy String?
+  DeactivatedDate String?
+  AccountLocked String?
+  AccountLockedDate String?
+  LoginAttempts String?
+
+  @@map("Users")
+}
+
+model WorkPermitTypes {
+  Id String?
+  Name String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  Prefix String?
+
+  @@map("WorkPermitTypes")
+}
+
+model WorkPermits {
+  Id String?
+  WorkPermitTypeId String?
+  RFIId String?
+  JobId String?
+  UserId String?
+  Description String?
+  AcknowledgedBySignatureId String?
+  CreatedDate String?
+  ModifiedDate String?
+  DeletedDate String?
+  CreatedBy String?
+  ModifiedBy String?
+  DeletedBy String?
+  UserSnapshot String?
+  AcknowledgedById String?
+  AcknowledgedBySnapshot String?
+  AcknowledgedDate String?
+  AcknowledgedComment String?
+  ClosureUserId String?
+  ClosureComment String?
+  ClosureDate String?
+  ClosureSignatureId String?
+  ClosureUserSnapshot String?
+  State String?
+
+  @@map("WorkPermits")
+}

@@ -1,0 +1,30 @@
+{
+  "name": "forrest-plan-and-track",
+  "version": "1.0.0",
+  "description": "> **Mission:** Prove that Forrest — an autonomous Monte Carlo optimization engine — can find non-obvious, actionable insights on a scenario nobody on the team has touched. Two weeks. 200 experiments. Three findings. One 15-minute share-out.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChonSong/forrest-plan-and-track.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChonSong/forrest-plan-and-track/issues"
+  },
+  "homepage": "https://github.com/ChonSong/forrest-plan-and-track#readme",
+  "dependencies": {
+    "@prisma/client": "^7.8.0",
+    "better-sqlite3": "^12.10.0",
+    "prisma": "^7.8.0",
+    "prisma-adapter-sqlite": "^1.0.0",
+    "sqlite3": "^6.0.1"
+  }
+}

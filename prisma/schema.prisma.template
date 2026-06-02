@@ -1,0 +1,9 @@
+// Prisma schema for the exported OneTag HMAS Sydney SQLite database
+// Auto-generated — maps directly to exported table/column names
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data/onetag.db"
+}
+
+{{TABLES}}
