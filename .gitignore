@@ -5,3 +5,4 @@ scripts/export_onetag*.py
 scripts/gen_prisma_schema.py
 scripts/export-onetag.sh
 notes/schema_export.sql
+data/
