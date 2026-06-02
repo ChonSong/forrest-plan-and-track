@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneTag HMAS Sydney — Schema Overview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Fira Code', monospace; background: #0d1117; color: #c9d1d9; padding: 2rem; }
+  h1 { color: #58a6ff; font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .subtitle { color: #8b949e; margin-bottom: 1.5rem; font-size: 0.85rem; }
+  .meta { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.8rem; max-width: 800px; }
+  .meta td { padding: 0.3rem 1rem 0.3rem 0; }
+  .meta td:first-child { color: #8b949e; white-space: nowrap; }
+  h2 { color: #3fb950; font-size: 1rem; margin: 1.5rem 0 0.8rem; border-bottom: 1px solid #21262d; padding-bottom: 0.4rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem; margin-bottom: 1.5rem; }
+  .table-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.75rem; position: relative; transition: border-color 0.2s; }
+  .table-card:hover { border-color: #58a6ff; }
+  .table-name { color: #e6edf3; font-weight: bold; }
+  .table-pk { color: #d29922; font-size: 0.65rem; margin-top: 0.2rem; }
+  .table-note { color: #6e7681; font-size: 0.65rem; margin-top: 0.15rem; }
+  .domain-tag { position: absolute; top: 0.3rem; right: 0.3rem; font-size: 0.55rem; padding: 0.1rem 0.3rem; border-radius: 3px; background: #30363d; color: #8b949e; }
+  .core .domain-tag { background: #1a2d1a; color: #3fb950; }
+  .isolation .domain-tag { background: #1a1a2d; color: #bc8cff; }
+  .permits .domain-tag { background: #2d1f1a; color: #d29922; }
+  .boundary .domain-tag { background: #1a2d2d; color: #39d353; }
+  .swma .domain-tag { background: #2d1a2d; color: #f78166; }
+  .audit .domain-tag { background: #2d2d1a; color: #e3b341; }
+  .users .domain-tag { background: #1a1a3d; color: #58a6ff; }
+  .assets .domain-tag { background: #1a2d1a; color: #3fb950; }
+  .lookup .domain-tag { background: #1c1c1c; color: #8b949e; }
+  .stats { margin-top: 1.5rem; padding: 1rem; background: #161b22; border: 1px solid #30363d; border-radius: 8px; font-size: 0.8rem; max-width: 800px; }
+  .stats h3 { color: #58a6ff; font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; }
+  .stat-num { font-size: 1.5rem; color: #3fb950; font-weight: bold; }
+  .stat-label { color: #6e7681; font-size: 0.7rem; }
+  .footer { margin-top: 2rem; color: #484f58; font-size: 0.75rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>🏭 OneTag HMAS Sydney — Database Schema</h1>
+<p class="subtitle">Industrial Safety Management System • SQL Server 2019 • Extracted from backup header</p>
+
+<table class="meta">
+  <tr><td>Database</td><td><code>OneTag_Sydney</code></td></tr>
+  <tr><td>Server</td><td><code>BC-DIRELAND-MB\MSSQLSERVER2019</code></td></tr>
+  <tr><td>Size</td><td>2.45 GB backup</td></tr>
+  <tr><td>Application</td><td>.NET 6.0.7 (EF Core Code-First, 50+ migrations)</td></tr>
+  <tr><td>Admin</td><td><code>AzureAD\DarrenIreland</code></td></tr>
+  <tr><td>Original host</td><td>Windows (BIOS Ireland MB), Sydney operations</td></tr>
+</table>
+
+<div class="stats">
+  <h3>Schema Summary</h3>
+  <div class="stats-grid">
+    <div><div class="stat-num">80+</div><div class="stat-label">User Tables</div></div>
+    <div><div class="stat-num">12</div><div class="stat-label">Domain Areas</div></div>
+    <div><div class="stat-num">50+</div><div class="stat-label">Migrations</div></div>
+    <div><div class="stat-num">6.0.7</div><div class="stat-label">App Version</div></div>
+  </div>
+</div>
+
+<h2>🔧 Core System</h2>
+<div class="grid">
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">Systems</div><div class="table-pk">PK: SystemId</div><div class="table-note">Master system registry</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">SystemTypes</div><div class="table-pk">PK: SystemTypeId</div><div class="table-note">System classification</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">SystemCategories</div><div class="table-pk">PK: SystemCategoryId</div><div class="table-note">System categorization</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">SystemTypesDepartments</div><div class="table-pk">Junction table</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">Areas</div><div class="table-note">Organizational areas</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">AreaTypes</div><div class="table-pk">PK: AreaTypeId</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">AreaSystem</div><div class="table-pk">PK: AreaSystem</div><div class="table-note">Area↔System mapping</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">Departments</div><div class="table-note">Organizational units</div></div>
+  <div class="table-card core"><span class="domain-tag">CORE</span><div class="table-name">Vessel</div><div class="table-note">/vessel reference</div></div>
+</div>
+
+<h2>🔒 Isolation Management (Lockout/Tagout)</h2>
+<div class="grid">
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">IsolationPoints</div><div class="table-note">Equipment isolation points</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">IsolationPointTypes</div><div class="table-note">Point classification</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">IsolationPointChecks</div><div class="table-note">Verification checks</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">IsolationPointLogs</div><div class="table-note">Audit trail</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">IsolationPointLockoutDeviceTypes</div><div class="table-pk">PK: composite</div><div class="table-note">Device compatibility</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">RFIIsolations</div><div class="table-pk">PK: RFIIsolationsId</div><div class="table-note">RFI-linked isolations</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">RFIIsolationSnapshots</div><div class="table-note">Point-in-time snapshots</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">RFILocks</div><div class="table-note">Lock records</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">RFILockBoxes</div><div class="table-note">Physical lock boxes</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">RFILocksRFIJobs</div><div class="table-note">Lock↔Job junction</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">RFILogs</div><div class="table-note">RFI event log</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">PadLocks</div><div class="table-note">Padlock inventory</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">PadLockTypes</div><div class="table-pk">PK: PadLockTypeId</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">LockoutDevices</div><div class="table-note">Lockout device inventory</div></div>
+  <div class="table-card isolation"><span class="domain-tag">ISOL</span><div class="table-name">LockoutDeviceTypes</div><div class="table-pk">PK: LockOutDeviceTypeId</div></div>
+</div>
+
+<h2>📋 Work Permits & Jobs</h2>
+<div class="grid">
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">WorkPermits</div><div class="table-note">Work authorizations</div></div>
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">WorkPermitTypes</div><div class="table-pk">PK: WorkPermitTypeId</div></div>
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">JobWorkPermitType</div><div class="table-pk">PK: JobWorkPermitTypeId</div></div>
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">Jobs</div><div class="table-note">Job records</div></div>
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">JobLogs</div><div class="table-note">Job event log</div></div>
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">Activities</div><div class="table-note">Activity records</div></div>
+  <div class="table-card permits"><span class="domain-tag">PERM</span><div class="table-name">ReasonCodes</div><div class="table-note">Reason lookups</div></div>
+</div>
+
+<h2>🛡️ Boundary Templates</h2>
+<div class="grid">
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplates</div><div class="table-pk">PK: BoundaryTemplateId</div><div class="table-note">Isolation boundary defs</div></div>
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplateItems</div><div class="table-pk">PK: BoundaryTemplateItemsId</div></div>
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplateLogs</div><div class="table-note">Change history</div></div>
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplateRFI</div><div class="table-note">Boundary↔RFI linkage</div></div>
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplateStandardActivity</div><div class="table-note">Standard activities</div></div>
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplateResource</div><div class="table-note">Resource assignments</div></div>
+  <div class="table-card boundary"><span class="domain-tag">BNDY</span><div class="table-name">BoundaryTemplateSystem</div><div class="table-note">System assignments</div></div>
+</div>
+
+<h2>⚡ SwMA (Safe Work Method Assessment)</h2>
+<div class="grid">
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMATemplates</div><div class="table-pk">PK: SwMATemplateId</div><div class="table-note">Assessment templates</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMATemplateItems</div><div class="table-pk">PK: SwMATemplateItemsId</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMATemplateDepartments</div><div class="table-note">Dept assignments</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMAs</div><div class="table-note">Actual assessments</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMAChecks</div><div class="table-pk">PK: SwMAChecksId</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMACheckType</div><div class="table-note">Check classification</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMALogs</div><div class="table-note">Event log</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMARegistrations</div><div class="table-note">Registrations</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMASAssessors</div><div class="table-note">Assessor assignments</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMAEventTriggers</div><div class="table-note">Event triggers</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">ResourceSwMACheck</div><div class="table-pk">PK: ResourceSwMACheckId</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMAJobsAdditionalDefects</div><div class="table-note">Additional defects</div></div>
+  <div class="table-card swma"><span class="domain-tag">SWMA</span><div class="table-name">SwMAJobsPreExistingDefects</div><div class="table-note">Pre-existing defects</div></div>
+</div>
+
+<h2>🔍 Audits & Temporary Tags</h2>
+<div class="grid">
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">Audits</div><div class="table-note">Audit records</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditChecks</div><div class="table-pk">PK: AuditChecksId</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditCheckResource</div><div class="table-pk">PK: AuditCheckResourceId</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditTemporaryTags</div><div class="table-pk">PK: AuditTemporaryTagsId</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditRFIJobs</div><div class="table-note">RFI↔Audit link</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditRFIIsolations</div><div class="table-note">RFI isolation observations</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditRFIIsolationSnapshots</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditDefects</div><div class="table-note">Found defects</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">AuditLogs</div><div class="table-note">Audit event log</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">TemporaryTags</div><div class="table-pk">PK: TemporaryTagId</div><div class="table-note">Active tags</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">TemporaryTagLogs</div><div class="table-pk">PK: TemporaryTagLogId</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">TemporaryTagState</div><div class="table-note">Tag state tracking</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">CheckListTemplates</div><div class="table-pk">PK: CheckListTemplateId</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">CheckListTemplateItems</div></div>
+  <div class="table-card audit"><span class="domain-tag">AUDT</span><div class="table-name">CheckListTemplateDepartments</div><div class="table-pk">PK: composite</div></div>
+</div>
+
+<h2>👥 Users, Roles & Permissions</h2>
+<div class="grid">
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">Users</div><div class="table-note">User accounts</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">UserLogins</div><div class="table-note">Credentials</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">UserLoginHistory</div><div class="table-note">Login audit trail</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">UserRoles</div><div class="table-note">Role assignments</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">UserPermissions</div><div class="table-note">Permission grants</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">UserLogs</div><div class="table-note">Activity log</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">Groups</div><div class="table-note">Security groups</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">GroupTypes</div><div class="table-pk">PK: GroupTypeId</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">Roles</div><div class="table-note">Role definitions</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">Permissions</div><div class="table-note">Permission definitions</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">Messages</div><div class="table-note">User messages</div></div>
+  <div class="table-card users"><span class="domain-tag">USER</span><div class="table-name">MessageTemplates</div><div class="table-pk">PK: MessageTemplateId</div></div>
+</div>
+
+<h2>🏗️ Assets & Equipment</h2>
+<div class="grid">
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">Assets</div><div class="table-note">Asset registry</div></div>
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">AssetTypes</div><div class="table-pk">PK: AssetTypeId</div></div>
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">AssetLogs</div><div class="table-note">Asset event log</div></div>
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">Equipment</div><div class="table-note">Equipment registry</div></div>
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">EquipmentIsolations</div><div class="table-note">Equipment↔Isolation mapping</div></div>
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">Resources</div><div class="table-note">Resource registry</div></div>
+  <div class="table-card assets"><span class="domain-tag">ASST</span><div class="table-name">ResourceType</div><div class="table-note">Resource classification</div></div>
+</div>
+
+<h2>📚 RFI (Request for Information)</h2>
+<div class="grid">
+  <div class="table-card lookup"><span class="domain-tag">RFI</span><div class="table-name">RFIs</div><div class="table-note">RFI records</div></div>
+  <div class="table-card lookup"><span class="domain-tag">RFI</span><div class="table-name">RFIJobs</div><div class="table-pk">PK: RFIJobId</div></div>
+  <div class="table-card lookup"><span class="domain-tag">RFI</span><div class="table-name">RFISystem</div><div class="table-pk">PK: RFISystemId</div></div>
+</div>
+
+<h2>🔢 Lookup & Configuration</h2>
+<div class="grid">
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">CoordinateSystems</div><div class="table-pk">PK: CoordinateSystemId</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">StandardActivity</div><div class="table-note">Standard activity defs</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">StandardActivityItems</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">AuditType</div><div class="table-note">Audit type lookup</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">MediaType</div><div class="table-note">Media type lookup</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">EnergyNominalType</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">EnergyPotentialType</div></div>
+  <div class="table-card lookup"><span class="domain-tag">LKUP</span><div class="table-name">EnergyRecordedType</div></div>
+</div>
+
+<div class="footer">
+  OneTag HMAS Sydney Schema Analysis • Extracted from backup header metadata • Cannot restore without SQL Server
+</div>
+
+</body>
+</html>
