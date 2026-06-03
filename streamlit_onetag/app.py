@@ -529,7 +529,10 @@ def chart_activity_heatmap(df, date_col):
 #  HELPERS
 # ═══════════════════════════════════════════════════════════════
 
-def fmt_duration(minutes):
+def show_sql(sql, label="SQL Query"):
+    """Display a collapsible SQL query section."""
+    with st.expander(f"📝 {label}", expanded=False):
+        st.code(sql, language="sql")
     if pd.isna(minutes): return "-"
     h, m = divmod(int(minutes), 60)
     return f"{h}h {m}m" if h else f"{m}m"
@@ -578,6 +581,7 @@ def page_rfi_jobs(flt):
     if df.empty: st.warning("No results."); return
     st.dataframe(df, use_container_width=True, height=500)
     st.caption(f"{len(df):,} rows")
+    show_sql(sql, "RFI → Jobs → Vendors Query")
     c1, c2 = st.columns(2)
     with c1:
         fig = chart_vendor_breakdown(df)
@@ -595,18 +599,33 @@ def page_jobs_iso_equip(flt):
     if df.empty: st.warning("No results."); return
     st.dataframe(df, use_container_width=True, height=500)
     st.caption(f"{len(df):,} rows")
+    show_sql(sql, "Jobs → Isolations → Equipment Query")
 
 
 def page_lock_history(flt):
     st.title("🔒 Lock History")
+    
+    # Duration filter checkbox
+    filter_negative = st.checkbox("Filter out DurationMinutes < -1 (bad data)", value=True)
+    
     with st.spinner("Querying…"):
         sql, params = lock_history(flt.dfrom, flt.dto, flt.company, flt.worker, None, None, flt.active_only)
         df = query_df(sql, params)
     if df.empty: st.warning("No results."); return
+    
+    # Apply DurationMinutes filter
+    if filter_negative and "DurationMinutes" in df.columns:
+        before = len(df)
+        df = df[df["DurationMinutes"] >= -1]
+        filtered = before - len(df)
+        if filtered > 0:
+            st.caption(f"⚠️ Filtered out {filtered} rows with DurationMinutes < -1")
+    
     if "DurationMinutes" in df.columns:
         df["Duration"] = df["DurationMinutes"].apply(fmt_duration)
     st.dataframe(df, use_container_width=True, height=500)
     st.caption(f"{len(df):,} rows")
+    show_sql(sql, "Lock History Query")
     c1, c2 = st.columns(2)
     with c1:
         fig = chart_activity_heatmap(df, "LockOnDate")
@@ -642,6 +661,7 @@ def page_rfi_logs(flt):
     df["LogTypeName"] = df["RFILogType"].map(LOG_TYPE_NAMES)
     st.dataframe(df, use_container_width=True, height=500)
     st.caption(f"{len(df):,} rows")
+    show_sql(sql, "RFI Log Timeline Query")
 
 
 def page_analysis(flt):
@@ -666,20 +686,22 @@ def page_analysis(flt):
             "RFI State Distribution", "Vendor Breakdown",
             "Daily Activity Timeline (90 days)", "Top 20 Most Locked Equipment"])
         with st.spinner("Loading…"):
+            sql = None
             if report == "Isolation Point Frequency":
-                df = query_df(isolation_frequency(50)); fig = chart_isolation_freq(df, 20)
+                sql = isolation_frequency(50); df = query_df(sql); fig = chart_isolation_freq(df, 20)
             elif report == "Worker Lock Activity":
-                df = query_df(worker_lock_activity(50)); fig = chart_worker_activity(df, 20)
+                sql = worker_lock_activity(50); df = query_df(sql); fig = chart_worker_activity(df, 20)
             elif report == "RFI State Distribution":
-                df = query_df("SELECT RFIState, COUNT(*) AS Count FROM RFIs WHERE DeletedDate IS NULL GROUP BY RFIState ORDER BY RFIState"); fig = chart_rfi_states(df)
+                sql = "SELECT RFIState, COUNT(*) AS Count FROM RFIs WHERE DeletedDate IS NULL GROUP BY RFIState ORDER BY RFIState"; df = query_df(sql); fig = chart_rfi_states(df)
             elif report == "Vendor Breakdown":
                 sql, _ = rfi_jobs_vendors(active_only=flt.active_only); df = query_df(sql); fig = chart_vendor_breakdown(df)
             elif report == "Daily Activity Timeline (90 days)":
-                df = query_df("""SELECT CAST(l.CreatedDate AS DATE) AS EventDate, l.RFILogType, COUNT(*) AS EventCount FROM RFILogs l WHERE l.CreatedDate >= DATEADD(DAY, -90, GETUTCDATE()) GROUP BY CAST(l.CreatedDate AS DATE), l.RFILogType ORDER BY EventDate"""); fig = chart_daily_timeline(df)
+                sql = """SELECT CAST(l.CreatedDate AS DATE) AS EventDate, l.RFILogType, COUNT(*) AS EventCount FROM RFILogs l WHERE l.CreatedDate >= DATEADD(DAY, -90, GETUTCDATE()) GROUP BY CAST(l.CreatedDate AS DATE), l.RFILogType ORDER BY EventDate"""; df = query_df(sql); fig = chart_daily_timeline(df)
             elif report == "Top 20 Most Locked Equipment":
-                df = query_df("""SELECT TOP 20 e.Name AS Equipment, ea.Name AS Area, COUNT(DISTINCT ri.RFIId) AS RFICount FROM Equipment e INNER JOIN RFIIsolations ri ON e.Id = ri.EquipmentId AND ri.DeletedDate IS NULL LEFT JOIN Areas ea ON e.AreaId = ea.Id WHERE e.DeletedDate IS NULL GROUP BY e.Name, ea.Name ORDER BY RFICount DESC"""); fig = None
+                sql = """SELECT TOP 20 e.Name AS Equipment, ea.Name AS Area, COUNT(DISTINCT ri.RFIId) AS RFICount FROM Equipment e INNER JOIN RFIIsolations ri ON e.Id = ri.EquipmentId AND ri.DeletedDate IS NULL LEFT JOIN Areas ea ON e.AreaId = ea.Id WHERE e.DeletedDate IS NULL GROUP BY e.Name, ea.Name ORDER BY RFICount DESC"""; df = query_df(sql); fig = None
         if not df.empty:
             st.dataframe(df, use_container_width=True, height=400)
+            if sql: show_sql(sql, f"Report: {report}")
         if fig:
             st.plotly_chart(fig, width='stretch')
     else:
@@ -701,41 +723,31 @@ def page_analysis(flt):
 #  JOB TIMEFRAME & PREDICTION QUERIES
 # ═══════════════════════════════════════════════════════════════
 
+TIMEFRAME_SQL = """
+    SELECT
+        j.Id, j.JobNumber, j.Description, j.JobState,
+        j.PlannedStartDate, j.PlannedEndDate, j.OnHold, j.ControlledJob,
+        c.Name AS Vendor, sa.StandardActivityNumber,
+        DATEDIFF(DAY, j.PlannedStartDate, j.PlannedEndDate) AS PlannedDurationDays,
+        MIN(rlrj.LockOnDate) AS ActualStart, MAX(rlrj.LockOffDate) AS ActualEnd,
+        DATEDIFF(DAY, MIN(rlrj.LockOnDate), MAX(rlrj.LockOffDate)) AS ActualDurationDays,
+        COUNT(DISTINCT rlrj.Id) AS LockEventCount,
+        COUNT(DISTINCT rj.RFIId) AS RFICount
+    FROM Jobs j
+    INNER JOIN Companies c ON j.CompanyId = c.Id
+    LEFT JOIN StandardActivities sa ON j.StandardActivityId = sa.Id
+    LEFT JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
+    LEFT JOIN RFILocksRFIJobs rlrj ON rlrj.RFIJobId = rj.Id AND rlrj.DeletedDate IS NULL
+    WHERE j.DeletedDate IS NULL
+    GROUP BY j.Id, j.JobNumber, j.Description, j.JobState,
+             j.PlannedStartDate, j.PlannedEndDate, j.OnHold,
+             j.ControlledJob, c.Name, sa.StandardActivityNumber
+"""
+
 @st.cache_data(ttl=120, show_spinner=False)
 def get_job_timeframe_data():
-    """
-    Return a DataFrame comparing planned vs actual durations per job.
-    Uses lock activity (LockOnDate/LockOffDate) as proxy for actual start/end.
-    Kept lightweight to avoid timeouts.
-    """
-    rows = query("""
-        SELECT
-            j.Id,
-            j.JobNumber,
-            j.Description,
-            j.JobState,
-            j.PlannedStartDate,
-            j.PlannedEndDate,
-            j.OnHold,
-            j.ControlledJob,
-            c.Name AS Vendor,
-            sa.StandardActivityNumber,
-            DATEDIFF(DAY, j.PlannedStartDate, j.PlannedEndDate) AS PlannedDurationDays,
-            MIN(rlrj.LockOnDate) AS ActualStart,
-            MAX(rlrj.LockOffDate) AS ActualEnd,
-            DATEDIFF(DAY, MIN(rlrj.LockOnDate), MAX(rlrj.LockOffDate)) AS ActualDurationDays,
-            COUNT(DISTINCT rlrj.Id) AS LockEventCount,
-            COUNT(DISTINCT rj.RFIId) AS RFICount
-        FROM Jobs j
-        INNER JOIN Companies c ON j.CompanyId = c.Id
-        LEFT JOIN StandardActivities sa ON j.StandardActivityId = sa.Id
-        LEFT JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
-        LEFT JOIN RFILocksRFIJobs rlrj ON rlrj.RFIJobId = rj.Id AND rlrj.DeletedDate IS NULL
-        WHERE j.DeletedDate IS NULL
-        GROUP BY j.Id, j.JobNumber, j.Description, j.JobState,
-                 j.PlannedStartDate, j.PlannedEndDate, j.OnHold,
-                 j.ControlledJob, c.Name, sa.StandardActivityNumber
-    """)
+    """Return a DataFrame comparing planned vs actual durations per job."""
+    rows = query(TIMEFRAME_SQL)
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
@@ -1185,6 +1197,9 @@ def page_job_timeframes(flt):
             )
             if fig_pred:
                 st.plotly_chart(fig_pred, width='stretch')
+
+    # Show the SQL query
+    show_sql(TIMEFRAME_SQL, "Job Timeframe Query")
 
 
 # ═══════════════════════════════════════════════════════════════
