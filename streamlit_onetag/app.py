@@ -673,6 +673,507 @@ def page_analysis(flt):
 
 
 # ═══════════════════════════════════════════════════════════════
+#  JOB TIMEFRAME & PREDICTION QUERIES
+# ═══════════════════════════════════════════════════════════════
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_job_timeframe_data():
+    """
+    Return a DataFrame comparing planned vs actual durations per job.
+    Uses lock activity (LockOnDate/LockOffDate) as the proxy for actual start/end
+    when real dates are available, falling back to planned dates.
+    Only completed jobs (JobState=2) with lock activity are included for training.
+    """
+    rows = query("""
+        WITH IsoCounts AS (
+            SELECT ri.RFIId, COUNT(DISTINCT ri.IsolationPointId) AS IsolationPointCount
+            FROM RFIIsolations ri
+            WHERE ri.DeletedDate IS NULL
+            GROUP BY ri.RFIId
+        )
+        SELECT
+            j.Id,
+            j.JobNumber,
+            j.Description,
+            j.JobState,
+            j.PlannedStartDate,
+            j.PlannedEndDate,
+            j.OnHold,
+            j.ControlledJob,
+            c.Name AS Vendor,
+            sa.StandardActivityNumber,
+            DATEDIFF(DAY, j.PlannedStartDate, j.PlannedEndDate) AS PlannedDurationDays,
+            MIN(rlrj.LockOnDate) AS ActualStart,
+            MAX(rlrj.LockOffDate) AS ActualEnd,
+            DATEDIFF(DAY, MIN(rlrj.LockOnDate), MAX(rlrj.LockOffDate)) AS ActualDurationDays,
+            COUNT(DISTINCT rlrj.Id) AS LockEventCount,
+            COUNT(DISTINCT rj.RFIId) AS RFICount,
+            SUM(ic.IsolationPointCount) AS IsolationPointCount
+        FROM Jobs j
+        INNER JOIN Companies c ON j.CompanyId = c.Id
+        LEFT JOIN StandardActivities sa ON j.StandardActivityId = sa.Id
+        INNER JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
+        INNER JOIN RFIs r ON rj.RFIId = r.Id AND r.DeletedDate IS NULL
+        LEFT JOIN IsoCounts ic ON r.Id = ic.RFIId
+        LEFT JOIN RFILocksRFIJobs rlrj ON rlrj.RFIJobId = rj.Id AND rlrj.DeletedDate IS NULL
+        WHERE j.DeletedDate IS NULL
+        GROUP BY j.Id, j.JobNumber, j.Description, j.JobState,
+                 j.PlannedStartDate, j.PlannedEndDate, j.OnHold,
+                 j.ControlledJob, c.Name, sa.StandardActivityNumber
+    """)
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    # Compute derived columns
+    df["HasActualDates"] = df["ActualStart"].notna() & df["ActualEnd"].notna()
+    df["HasPlannedDates"] = df["PlannedStartDate"].notna() & df["PlannedEndDate"].notna()
+    df["ScheduleVariance"] = df["ActualDurationDays"] - df["PlannedDurationDays"]
+    df["OnTime"] = df.apply(
+        lambda r: r["ActualDurationDays"] <= r["PlannedDurationDays"]
+        if (pd.notna(r["ActualDurationDays"]) and pd.notna(r["PlannedDurationDays"]))
+        else None, axis=1
+    )
+    return df
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_prediction_dataset():
+    """
+    Build a training dataset: completed jobs (JobState=2) with actual durations.
+    Features: vendor, planned duration, RFI count, isolation point count, lock events, standard activity.
+    Target: actual duration in days.
+    """
+    df = get_job_timeframe_data()
+    if df.empty:
+        return pd.DataFrame()
+    completed = df[
+        (df["JobState"] == 2) &
+        (df["HasActualDates"]) &
+        (df["HasPlannedDates"]) &
+        (df["ActualDurationDays"] > 0) &
+        (df["PlannedDurationDays"] > 0)
+    ].copy()
+    return completed
+
+
+# ═══════════════════════════════════════════════════════════════
+#  JOB TIMEFRAME & PREDICTION CHARTS
+# ═══════════════════════════════════════════════════════════════
+
+def chart_gantt_comparison(df, top_n=30):
+    """Gantt chart comparing planned vs actual timelines for top N jobs by duration."""
+    if df.empty:
+        return None
+    plot = df.head(top_n).copy()
+    plot["JobLabel"] = plot["JobNumber"].str[:20] + ": " + plot["Description"].str[:30]
+    fig = go.Figure()
+    # Planned bars
+    fig.add_trace(go.Bar(
+        y=plot["JobLabel"],
+        x=plot["PlannedDurationDays"],
+        orientation="h",
+        name="Planned Duration",
+        marker_color="#3498db",
+        opacity=0.7,
+    ))
+    # Actual bars
+    fig.add_trace(go.Bar(
+        y=plot["JobLabel"],
+        x=plot["ActualDurationDays"],
+        orientation="h",
+        name="Actual Duration",
+        marker_color="#e74c3c",
+        opacity=0.7,
+    ))
+    fig.update_layout(
+        title=f"Top {top_n} Jobs: Planned vs Actual Duration (days)",
+        barmode="group",
+        yaxis={"categoryorder": "total ascending", "autorange": "reversed"},
+        xaxis_title="Duration (days)",
+        height=max(400, top_n * 28),
+    )
+    return apply_theme(fig)
+
+
+def chart_schedule_variance(df):
+    """Histogram of schedule variance (actual - planned days). Negative = early, positive = late."""
+    if df.empty:
+        return None
+    valid = df.dropna(subset=["ScheduleVariance"]).copy()
+    valid = valid[valid["ScheduleVariance"].between(-200, 200)]
+    if valid.empty:
+        return None
+    fig = px.histogram(
+        valid, x="ScheduleVariance", nbins=50,
+        title="Schedule Variance Distribution (Actual - Planned Days)",
+        labels={"ScheduleVariance": "Days (negative = early, positive = late)"},
+        color_discrete_sequence=["#f39c12"],
+    )
+    fig.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.5)
+    return apply_theme(fig)
+
+
+def chart_vendor_performance(df):
+    """Bar chart showing average schedule variance by vendor."""
+    if df.empty:
+        return None
+    agg = df.dropna(subset=["ScheduleVariance"]).groupby("Vendor").agg(
+        AvgVariance=("ScheduleVariance", "mean"),
+        JobCount=("JobNumber", "count"),
+    ).reset_index()
+    agg = agg[agg["JobCount"] >= 3].sort_values("AvgVariance")
+    if agg.empty:
+        return None
+    colors = ["#e74c3c" if v > 0 else "#2ecc71" for v in agg["AvgVariance"]]
+    fig = go.Figure(go.Bar(
+        x=agg["AvgVariance"],
+        y=agg["Vendor"],
+        orientation="h",
+        marker_color=colors,
+        text=agg["JobCount"].apply(lambda n: f"{n} jobs"),
+        textposition="outside",
+    ))
+    fig.update_layout(
+        title="Vendor Performance: Average Schedule Variance (days)",
+        xaxis_title="Avg Days (negative = early, positive = late)",
+        yaxis={"categoryorder": "total ascending", "autorange": "reversed"},
+        height=max(300, len(agg) * 25),
+    )
+    fig.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.5)
+    return apply_theme(fig)
+
+
+def chart_planned_vs_actual_scatter(df):
+    """Scatter: planned duration vs actual duration. Diagonal = on-time."""
+    if df.empty:
+        return None
+    valid = df.dropna(subset=["PlannedDurationDays", "ActualDurationDays"]).copy()
+    valid = valid[
+        (valid["PlannedDurationDays"] > 0) &
+        (valid["ActualDurationDays"] > 0) &
+        (valid["PlannedDurationDays"] <= 1000) &
+        (valid["ActualDurationDays"] <= 1000)
+    ]
+    if valid.empty:
+        return None
+    max_d = max(valid["PlannedDurationDays"].max(), valid["ActualDurationDays"].max())
+    fig = px.scatter(
+        valid, x="PlannedDurationDays", y="ActualDurationDays",
+        color="Vendor", hover_data=["JobNumber", "Description", "ScheduleVariance"],
+        title="Planned vs Actual Duration (completed jobs)",
+        labels={"PlannedDurationDays": "Planned (days)", "ActualDurationDays": "Actual (days)"},
+        opacity=0.6,
+    )
+    # On-time diagonal
+    fig.add_trace(go.Scatter(
+        x=[0, max_d], y=[0, max_d],
+        mode="lines", line=dict(dash="dash", color="white", width=1),
+        name="On-time line", showlegend=True,
+    ))
+    fig.update_layout(height=500)
+    return apply_theme(fig)
+
+
+def chart_prediction_results(predictions, feature_importance):
+    """Show predicted vs actual for validation set + upcoming job predictions."""
+    if predictions.empty:
+        return None, None
+    # Scatter: predicted vs actual
+    fig1 = px.scatter(
+        predictions, x="ActualDurationDays", y="PredictedDurationDays",
+        hover_data=["JobNumber"],
+        title="Model Validation: Predicted vs Actual Duration (days)",
+        labels={"ActualDurationDays": "Actual (days)", "PredictedDurationDays": "Predicted (days)"},
+        opacity=0.5,
+    )
+    max_d = max(predictions["ActualDurationDays"].max(), predictions["PredictedDurationDays"].max())
+    fig1.add_trace(go.Scatter(
+        x=[0, max_d], y=[0, max_d],
+        mode="lines", line=dict(dash="dash", color="white", width=1),
+        name="Perfect prediction",
+    ))
+    fig1.update_layout(height=400)
+    fig1 = apply_theme(fig1)
+
+    # Feature importance
+    if not feature_importance.empty:
+        fi = feature_importance.sort_values("Importance", ascending=True)
+        fig2 = go.Figure(go.Bar(
+            x=fi["Importance"], y=fi["Feature"], orientation="h",
+            marker_color="#2ecc71",
+        ))
+        fig2.update_layout(title="Feature Importance", xaxis_title="Importance", height=300)
+        fig2 = apply_theme(fig2)
+    else:
+        fig2 = None
+
+    return fig1, fig2
+
+
+# ═══════════════════════════════════════════════════════════════
+#  JOB TIMEFRAME & PREDICTION PAGE
+# ═══════════════════════════════════════════════════════════════
+
+def page_job_timeframes(flt):
+    st.title("⏱️ Job Timeframes & Completion Prediction")
+    st.caption("Compare planned vs actual durations and predict future job completions")
+
+    sub_tab = st.radio("View", [
+        "📊 Overview & Comparison",
+        "📈 Detailed Analysis",
+        "🔮 Predict Future Jobs",
+    ], horizontal=True)
+
+    with st.spinner("Loading job timeframe data…"):
+        df = get_job_timeframe_data()
+
+    if df.empty:
+        st.warning("No job timeframe data available.")
+        return
+
+    # ---- KPI cards ----
+    total_jobs = len(df)
+    completed = df[df["JobState"] == 2]
+    active = df[df["JobState"] == 1]
+    cancelled = df[df["JobState"] == 0]
+    completed_with_dates = completed.dropna(subset=["ScheduleVariance"])
+
+    cols_kpi = st.columns(5)
+    cols_kpi[0].metric("Total Jobs", f"{total_jobs:,}")
+    cols_kpi[1].metric("Completed", f"{len(completed):,}")
+    cols_kpi[2].metric("Active", f"{len(active):,}")
+    cols_kpi[3].metric("Cancelled", f"{len(cancelled):,}")
+    if not completed_with_dates.empty:
+        on_time_pct = completed_with_dates["OnTime"].mean() * 100
+        avg_variance = completed_with_dates["ScheduleVariance"].mean()
+        cols_kpi[4].metric("On-Time Rate", f"{on_time_pct:.0f}%", f"{avg_variance:+.0f}d avg")
+
+    # ================================================================
+    # TAB 1: Overview & Comparison
+    # ================================================================
+    if sub_tab == "📊 Overview & Comparison":
+        st.subheader("Planned vs Actual Duration")
+        st.caption(f"Showing completed jobs ({len(completed_with_dates)}) with both planned and actual dates")
+
+        # Filter controls
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            vendor_filter = st.selectbox(
+                "Vendor",
+                options=["All"] + sorted(df["Vendor"].dropna().unique().tolist()),
+            )
+        with c2:
+            min_duration = st.number_input("Min Planned Duration (days)", 0, 500, 0)
+        with c3:
+            max_duration = st.number_input("Max Planned Duration (days)", 1, 3650, 500)
+
+        plot_df = completed_with_dates.copy()
+        if vendor_filter != "All":
+            plot_df = plot_df[plot_df["Vendor"] == vendor_filter]
+        plot_df = plot_df[
+            (plot_df["PlannedDurationDays"] >= min_duration) &
+            (plot_df["PlannedDurationDays"] <= max_duration)
+        ]
+
+        if not plot_df.empty:
+            # Gantt comparison
+            sort_by = st.selectbox("Sort by", ["PlannedDurationDays", "ActualDurationDays", "ScheduleVariance"], index=2)
+            plot_df = plot_df.sort_values(sort_by, ascending=False)
+            fig = chart_gantt_comparison(plot_df, 30)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True)
+
+            # Data table with key columns
+            st.caption(f"{len(plot_df):,} jobs matching filters")
+            display_cols = ["JobNumber", "Description", "Vendor", "JobState",
+                            "PlannedStartDate", "PlannedEndDate", "ActualStart", "ActualEnd",
+                            "PlannedDurationDays", "ActualDurationDays", "ScheduleVariance", "OnTime"]
+            available = [c for c in display_cols if c in plot_df.columns]
+            st.dataframe(plot_df[available], use_container_width=True, height=400)
+
+            csv = plot_df[available].to_csv(index=False).encode()
+            st.download_button("📥 Download CSV", csv, "job_timeframes.csv", "text/csv")
+        else:
+            st.info("No jobs match the current filters.")
+
+    # ================================================================
+    # TAB 2: Detailed Analysis
+    # ================================================================
+    elif sub_tab == "📈 Detailed Analysis":
+        st.subheader("Schedule Variance Analysis")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            fig_var = chart_schedule_variance(completed_with_dates)
+            if fig_var:
+                st.plotly_chart(fig_var, use_container_width=True)
+            else:
+                st.info("Insufficient variance data.")
+        with c2:
+            fig_scatter = chart_planned_vs_actual_scatter(completed_with_dates)
+            if fig_scatter:
+                st.plotly_chart(fig_scatter, use_container_width=True)
+            else:
+                st.info("Insufficient scatter data.")
+
+        st.subheader("Vendor Performance")
+        fig_vendor = chart_vendor_performance(completed_with_dates)
+        if fig_vendor:
+            st.plotly_chart(fig_vendor, use_container_width=True)
+        else:
+            st.info("Insufficient vendor data (need ≥3 completed jobs per vendor).")
+
+        st.subheader("Duration Statistics by Vendor")
+        if not completed_with_dates.empty:
+            stats = completed_with_dates.groupby("Vendor").agg(
+                Jobs=("JobNumber", "count"),
+                AvgPlanned=("PlannedDurationDays", "mean"),
+                AvgActual=("ActualDurationDays", "mean"),
+                AvgVariance=("ScheduleVariance", "mean"),
+                MedianVariance=("ScheduleVariance", "median"),
+                OnTimeRate=("OnTime", "mean"),
+                AvgLockEvents=("LockEventCount", "mean"),
+                AvgRFIs=("RFICount", "mean"),
+            ).reset_index()
+            stats["OnTimeRate"] = (stats["OnTimeRate"] * 100).round(0).astype(int)
+            stats = stats[stats["Jobs"] >= 3].sort_values("AvgVariance")
+            st.dataframe(stats, use_container_width=True, height=400)
+
+    # ================================================================
+    # TAB 3: Predict Future Jobs
+    # ================================================================
+    elif sub_tab == "🔮 Predict Future Jobs":
+        st.subheader("Predict Completion Durations for Active/Cancelled Jobs")
+        st.caption(
+            "Uses historical completed-job patterns to estimate how long "
+            "active or newly-created jobs will take. "
+            "Model: historical average duration per vendor + actual lock-event rate."
+        )
+
+        # Get completed jobs for training
+        training = get_prediction_dataset()
+        if training.empty:
+            st.warning("No completed jobs with both planned and actual dates found for training.")
+            return
+
+        st.write(f"**Training data:** {len(training):,} completed jobs with actual durations")
+
+        # --- Simple but robust prediction model ---
+        # Method: weighted blend of:
+        #   1. Vendor historical average duration (weighted by job count)
+        #   2. Planned duration (regression factor from historical planned→actual ratio)
+        #   3. Complexity proxy: lock events per RFI ratio
+
+        # Compute vendor-level stats
+        vendor_stats = training.groupby("Vendor").agg(
+            VendorAvgActual=("ActualDurationDays", "mean"),
+            VendorAvgPlanned=("PlannedDurationDays", "mean"),
+            VendorCount=("JobNumber", "count"),
+        ).reset_index()
+        vendor_stats["VendorRatio"] = vendor_stats["VendorAvgActual"] / vendor_stats["VendorAvgPlanned"].clip(lower=1)
+
+        # Global ratio (planned→actual conversion factor)
+        global_ratio = training["ActualDurationDays"].sum() / training["PlannedDurationDays"].clip(lower=1).sum()
+
+        # Predict for active + cancelled jobs
+        future_jobs = df[df["JobState"].isin([0, 1])].copy()
+        if future_jobs.empty:
+            st.info("No active or cancelled jobs to predict.")
+            return
+
+        # Merge vendor stats
+        future_jobs = future_jobs.merge(vendor_stats[["Vendor", "VendorAvgActual", "VendorRatio", "VendorCount"]], on="Vendor", how="left")
+
+        # Prediction formula (simple weighted model)
+        def predict_row(r):
+            predictions = []
+            # Vendor-based prediction (if available)
+            if pd.notna(r["VendorAvgActual"]) and r.get("VendorCount", 0) >= 3:
+                predictions.append(("vendor_mean", r["VendorAvgActual"], 0.4))
+            # Planned-duration regression
+            if pd.notna(r["PlannedDurationDays"]) and r["PlannedDurationDays"] > 0:
+                # Use vendor ratio if available, otherwise global ratio
+                ratio = r["VendorRatio"] if pd.notna(r["VendorRatio"]) else global_ratio
+                predictions.append(("planned_regression", r["PlannedDurationDays"] * ratio, 0.4))
+            # Complexity proxy: if we have lock-activity started, use elapsed time + rate
+            if pd.notna(r["ActualStart"]) and pd.notna(r["LockEventCount"]) and r["LockEventCount"] > 0:
+                elapsed = (pd.Timestamp.utcnow() - r["ActualStart"]).days
+                if r["RFICount"] > 0:
+                    per_rfi = elapsed / r["RFICount"]
+                    # Estimate remaining RFIs (assume similar to vendor average)
+                    avg_rfi = 2.0  # default
+                    if pd.notna(r.get("VendorAvgActual")):
+                        avg_rfi = max(1, r.get("RFICount", 2))
+                    remaining = max(0, (r.get("RFICount", 2) - 1)) * per_rfi
+                    predictions.append(("activity_based", elapsed + remaining, 0.2))
+            if not predictions:
+                return None
+            total_weight = sum(w for _, _, w in predictions)
+            return sum(v * w for _, v, w in predictions) / total_weight
+
+        future_jobs["PredictedDurationDays"] = future_jobs.apply(predict_row, axis=1)
+        future_jobs["PredictedEndDate"] = future_jobs.apply(
+            lambda r: r["ActualStart"] + pd.Timedelta(days=r["PredictedDurationDays"])
+            if pd.notna(r["ActualStart"]) and pd.notna(r["PredictedDurationDays"])
+            else (r["PlannedEndDate"] if pd.notna(r["PlannedEndDate"]) else None),
+            axis=1,
+        )
+
+        # --- Show predictions ---
+        pred_valid = future_jobs.dropna(subset=["PredictedDurationDays"]).copy()
+        if pred_valid.empty:
+            st.info("Could not generate predictions for current active jobs.")
+            return
+
+        st.write(f"**Predictions generated for:** {len(pred_valid):,} jobs")
+
+        # Summary metrics
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Jobs Predicted", f"{len(pred_valid):,}")
+        c2.metric("Avg Predicted Duration", f"{pred_valid['PredictedDurationDays'].mean():.0f} days")
+        overdue = pred_valid[
+            (pred_valid["PlannedEndDate"].notna()) &
+            (pred_valid["PredictedEndDate"] > pred_valid["PlannedEndDate"])
+        ]
+        c3.metric("Predicted Overdue", f"{len(overdue):,}", f"{len(overdue)/len(pred_valid)*100:.0f}%")
+
+        # Table of predictions
+        st.subheader("Upcoming Job Predictions")
+        pred_display = pred_valid[[
+            "JobNumber", "Description", "Vendor", "JobState", "OnHold",
+            "PlannedStartDate", "PlannedEndDate", "ActualStart",
+            "PredictedDurationDays", "PredictedEndDate", "RFICount", "LockEventCount"
+        ]].sort_values("PredictedEndDate", ascending=True)
+        pred_display["JobState"] = pred_display["JobState"].map({0: "Cancelled", 1: "Active"})
+        st.dataframe(pred_display, use_container_width=True, height=500)
+
+        csv2 = pred_display.to_csv(index=False).encode()
+        st.download_button("📥 Download Predictions CSV", csv2, "job_predictions.csv", "text/csv")
+
+        # Validation: how well does this predict on completed jobs?
+        st.subheader("Model Validation (on completed jobs)")
+        completed_train = training.copy()
+        completed_train = completed_train.merge(
+            vendor_stats[["Vendor", "VendorAvgActual", "VendorRatio", "VendorCount"]],
+            on="Vendor", how="left"
+        )
+        completed_train["PredictedDurationDays"] = completed_train.apply(predict_row, axis=1)
+        valid_completed = completed_train.dropna(subset=["PredictedDurationDays"])
+        if not valid_completed.empty:
+            valid_completed["Error"] = valid_completed["PredictedDurationDays"] - valid_completed["ActualDurationDays"]
+            valid_completed["AbsError"] = valid_completed["Error"].abs()
+            mae = valid_completed["AbsError"].mean()
+            st.write(f"**MAE on completed jobs:** {mae:.1f} days (mean absolute error)")
+
+            fig_pred, _ = chart_prediction_results(
+                valid_completed[["ActualDurationDays", "PredictedDurationDays", "JobNumber"]],
+                pd.DataFrame(),
+            )
+            if fig_pred:
+                st.plotly_chart(fig_pred, use_container_width=True)
+
+
+# ═══════════════════════════════════════════════════════════════
 #  MAIN APP
 # ═══════════════════════════════════════════════════════════════
 
@@ -690,7 +1191,7 @@ else:
     st.sidebar.info("Run: `docker start sqlserver-onetag` on host")
     st.stop()
 
-page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📈 Analysis"])
+page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "⏱️ Job Timeframes", "📈 Analysis"])
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Filters")
@@ -718,6 +1219,7 @@ pages = {
     "🔗 Jobs → Isolations → Equipment": page_jobs_iso_equip,
     "🔒 Lock History": page_lock_history,
     "📜 RFI Log Timeline": page_rfi_logs,
+    "⏱️ Job Timeframes": page_job_timeframes,
     "📈 Analysis": page_analysis,
 }
 pages[page](Filters)
