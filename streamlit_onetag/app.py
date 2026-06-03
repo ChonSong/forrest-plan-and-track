@@ -315,128 +315,6 @@ def apply_theme(fig):
     return fig
 
 
-def sankey_rfi_state_flow():
-    """
-    Build a Sankey diagram showing RFI state transitions.
-    For each RFI, order its log entries chronologically and count
-    transitions between consecutive RFILogType values.
-    """
-    rows = query("""
-        SELECT l1.RFIId, l1.RFILogType AS FromType, l2.RFILogType AS ToType, COUNT(*) AS Weight
-        FROM (
-            SELECT RFIId, RFILogType, CreatedDate,
-                   ROW_NUMBER() OVER (PARTITION BY RFIId ORDER BY CreatedDate) AS Seq
-            FROM RFILogs
-        ) l1
-        INNER JOIN (
-            SELECT RFIId, RFILogType, CreatedDate,
-                   ROW_NUMBER() OVER (PARTITION BY RFIId ORDER BY CreatedDate) AS Seq
-            FROM RFILogs
-        ) l2 ON l1.RFIId = l2.RFIId AND l1.Seq = l2.Seq - 1
-        WHERE l1.RFILogType != l2.RFILogType
-        GROUP BY l1.RFIId, l1.RFILogType, l2.RFILogType
-    """)
-    if not rows:
-        return None
-    df = pd.DataFrame(rows)
-    # Aggregate all RFIId rows
-    agg = df.groupby(["FromType", "ToType"], as_index=False)["Weight"].sum()
-    agg = agg[agg["Weight"] >= 3]  # filter noise
-    nodes = sorted(set(agg["FromType"].tolist() + agg["ToType"].tolist()))
-    label_map = {v: f"{v}: {LOG_TYPE_NAMES.get(v, f'State {v}')}" for v in nodes}
-    idx_map = {v: i for i, v in enumerate(nodes)}
-    fig = go.Figure(go.Sankey(
-        node=dict(label=[label_map[n] for n in nodes], pad=15, thickness=20,
-                  color=["#2ecc71" if n in {1, 2, 3, 8, 9} else "#e74c3c" if n in {6, 11, 12}
-                         else "#f39c12" for n in nodes]),
-        link=dict(source=[idx_map[r["FromType"]] for _, r in agg.iterrows()],
-                  target=[idx_map[r["ToType"]] for _, r in agg.iterrows()],
-                  value=[r["Weight"] for _, r in agg.iterrows()])))
-    fig.update_layout(title="RFI State Transitions", font_size=12)
-    return apply_theme(fig)
-
-
-def sankey_lock_chain():
-    """
-    Sankey diagram: Worker → Padlock → LockBox → RFI
-    Shows the physical lock chain for active events.
-    """
-    rows = query("""
-        SELECT TOP 500
-            CONCAT(u.FirstName, ' ', u.LastName) AS Worker,
-            p.SerialNumber AS Padlock,
-            rlb.SerialNumber AS LockBox,
-            r.RFINumber
-        FROM RFILocksRFIJobs rlrj
-        INNER JOIN RFILocks rl ON rlrj.RFILockId = rl.Id AND rl.DeletedDate IS NULL
-        INNER JOIN PadLocks p ON rl.PadLockId = p.Id AND p.DeletedDate IS NULL
-        INNER JOIN Users u ON rl.UserId = u.Id AND u.DeletedDate IS NULL
-        INNER JOIN RFIJobs rj ON rlrj.RFIJobId = rj.Id
-        INNER JOIN RFIs r ON rj.RFIId = r.Id AND r.DeletedDate IS NULL
-        INNER JOIN RFILockBoxes rlb ON r.Id = rlb.RFIId
-        WHERE rlrj.DeletedDate IS NULL AND rlb.SerialNumber IS NOT NULL
-        ORDER BY rlrj.LockOnDate DESC
-    """)
-    if not rows:
-        return None
-    df = pd.DataFrame(rows)
-    # Build links: Worker→Padlock, Padlock→LockBox, LockBox→RFI
-    links = []
-    for _, r in df.iterrows():
-        links.append({"source": f"🧑 {r['Worker']}", "target": f"🔒 {r['Padlock']}", "value": 1})
-        links.append({"source": f"🔒 {r['Padlock']}", "target": f"📦 {r['LockBox']}", "value": 1})
-        links.append({"source": f"📦 {r['LockBox']}", "target": f"📋 {r['RFINumber']}", "value": 1})
-    ldf = pd.DataFrame(links)
-    agg = ldf.groupby(["source", "target"], as_index=False)["value"].sum()
-    nodes = list(dict.fromkeys(agg["source"].tolist() + agg["target"].tolist()))
-    idx_map = {v: i for i, v in enumerate(nodes)}
-    fig = go.Figure(go.Sankey(
-        node=dict(label=nodes, pad=15, thickness=20, color="#3498db"),
-        link=dict(source=[idx_map[r["source"]] for _, r in agg.iterrows()],
-                  target=[idx_map[r["target"]] for _, r in agg.iterrows()],
-                  value=[r["value"] for _, r in agg.iterrows()])))
-    fig.update_layout(title="Lock Chain: Worker → Padlock → LockBox → RFI (last 500)", font_size=11)
-    return apply_theme(fig)
-
-
-def sankey_vendor_equipment():
-    """
-    Sankey: Vendor → Job → Equipment
-    Shows which vendors work on which equipment via which jobs.
-    """
-    rows = query("""
-        SELECT TOP 300
-            c.Name AS Vendor,
-            j.JobNumber,
-            e.Name AS Equipment
-        FROM Jobs j
-        INNER JOIN Companies c ON j.CompanyId = c.Id AND c.DeletedDate IS NULL
-        INNER JOIN RFIJobs rj ON rj.JobId = j.Id
-        INNER JOIN RFIs r ON rj.RFIId = r.Id AND r.DeletedDate IS NULL
-        INNER JOIN RFIIsolations ri ON r.Id = ri.RFIId AND ri.DeletedDate IS NULL
-        INNER JOIN Equipment e ON ri.EquipmentId = e.Id AND e.DeletedDate IS NULL
-        WHERE j.DeletedDate IS NULL
-    """)
-    if not rows:
-        return None
-    df = pd.DataFrame(rows)
-    links = []
-    for _, r in df.iterrows():
-        links.append({"source": f"🏢 {r['Vendor']}", "target": f"📄 {r['JobNumber']}", "value": 1})
-        links.append({"target": f"⚙️ {r['Equipment']}", "source": f"📄 {r['JobNumber']}", "value": 1})
-    ldf = pd.DataFrame(links)
-    agg = ldf.groupby(["source", "target"], as_index=False)["value"].sum()
-    nodes = list(dict.fromkeys(agg["source"].tolist() + agg["target"].tolist()))
-    idx_map = {v: i for i, v in enumerate(nodes)}
-    fig = go.Figure(go.Sankey(
-        node=dict(label=nodes, pad=15, thickness=20, color="#2ecc71"),
-        link=dict(source=[idx_map[r["source"]] for _, r in agg.iterrows()],
-                  target=[idx_map[r["target"]] for _, r in agg.iterrows()],
-                  value=[r["value"] for _, r in agg.iterrows()])))
-    fig.update_layout(title="Vendor → Job → Equipment", font_size=11)
-    return apply_theme(fig)
-
-
 def chart_rfi_states(df):
     if df.empty: return None
     fig = px.pie(df, values="Count", names="RFIState",
@@ -474,17 +352,6 @@ def chart_lock_histogram(df, max_min=480):
     fig = px.histogram(df, x="DurationMinutes", nbins=50,
                        title="Lock Duration Distribution",
                        labels={"DurationMinutes": "Duration (minutes)"})
-    return apply_theme(fig)
-
-
-def chart_daily_timeline(df):
-    if df.empty: return None
-    df = df.copy()
-    df["EventDate"] = pd.to_datetime(df["EventDate"])
-    df = df.sort_values("EventDate")
-    fig = px.line(df, x="EventDate", y="EventCount", color="RFILogType",
-                  title="Daily Activity Timeline",
-                  labels={"EventDate": "Date", "EventCount": "Events"})
     return apply_theme(fig)
 
 
@@ -669,57 +536,29 @@ def page_rfi_logs(flt):
 
 def page_analysis(flt):
     st.title("📈 Analysis & Sankey Diagrams")
-    tab = st.radio("Analysis type", ["Sankey Diagrams", "Pre-built Reports", "Custom SQL"], horizontal=True)
-    if tab == "Sankey Diagrams":
-        st.subheader("State Flow Sankey")
-        fig = sankey_rfi_state_flow()
-        if fig: st.plotly_chart(fig, width='stretch')
-        else: st.info("Insufficient data for state flow Sankey — need more log entries.")
-        st.subheader("Lock Chain Sankey")
-        fig2 = sankey_lock_chain()
-        if fig2: st.plotly_chart(fig2, width='stretch')
-        else: st.info("No lock chains with LockBox assignments found in recent data.")
-        st.subheader("Vendor → Equipment Sankey")
-        fig3 = sankey_vendor_equipment()
-        if fig3: st.plotly_chart(fig3, width='stretch')
-        else: st.info("Insufficient data for vendor→equipment Sankey.")
-    elif tab == "Pre-built Reports":
-        report = st.selectbox("Report", [
-            "Isolation Point Frequency", "Worker Lock Activity",
-            "RFI State Distribution", "Vendor Breakdown",
-            "Daily Activity Timeline (90 days)", "Top 20 Most Locked Equipment"])
-        with st.spinner("Loading…"):
-            sql = None
-            if report == "Isolation Point Frequency":
-                sql = isolation_frequency(50); df = query_df(sql); fig = chart_isolation_freq(df, 20)
-            elif report == "Worker Lock Activity":
-                sql = worker_lock_activity(50); df = query_df(sql); fig = chart_worker_activity(df, 20)
-            elif report == "RFI State Distribution":
-                sql = "SELECT RFIState, COUNT(*) AS Count FROM RFIs WHERE DeletedDate IS NULL GROUP BY RFIState ORDER BY RFIState"; df = query_df(sql); fig = chart_rfi_states(df)
-            elif report == "Vendor Breakdown":
-                sql, _ = rfi_jobs_vendors(active_only=flt.active_only); df = query_df(sql); fig = chart_vendor_breakdown(df)
-            elif report == "Daily Activity Timeline (90 days)":
-                sql = """SELECT CAST(l.CreatedDate AS DATE) AS EventDate, l.RFILogType, COUNT(*) AS EventCount FROM RFILogs l WHERE l.CreatedDate >= DATEADD(DAY, -90, GETUTCDATE()) GROUP BY CAST(l.CreatedDate AS DATE), l.RFILogType ORDER BY EventDate"""; df = query_df(sql); fig = chart_daily_timeline(df)
-            elif report == "Top 20 Most Locked Equipment":
-                sql = """SELECT TOP 20 e.Name AS Equipment, ea.Name AS Area, COUNT(DISTINCT ri.RFIId) AS RFICount FROM Equipment e INNER JOIN RFIIsolations ri ON e.Id = ri.EquipmentId AND ri.DeletedDate IS NULL LEFT JOIN Areas ea ON e.AreaId = ea.Id WHERE e.DeletedDate IS NULL GROUP BY e.Name, ea.Name ORDER BY RFICount DESC"""; df = query_df(sql); fig = None
-        if not df.empty:
-            st.dataframe(df, use_container_width=True, height=400)
-            if sql: show_sql(sql, f"Report: {report}")
-        if fig:
-            st.plotly_chart(fig, width='stretch')
-    else:
-        st.warning("⚠️ Only SELECT queries allowed.")
-        sql = st.text_area("SQL", height=150, placeholder="SELECT TOP 10 * FROM Users WHERE DeletedDate IS NULL")
-        if st.button("Run", type="primary") and sql.strip():
-            if not sql.strip().upper().startswith("SELECT"): st.error("Only SELECT allowed.")
-            else:
-                with st.spinner("Running…"):
-                    df = query_df(sql)
-                if not df.empty:
-                    st.dataframe(df, use_container_width=True, height=500)
-                    st.caption(f"{len(df):,} rows in {len(df.columns)} columns")
-                    csv = df.to_csv(index=False).encode()
-                    st.download_button("📥 Download CSV", csv, "query_results.csv", "text/csv")
+    st.warning("⚠️ This page is currently under development and has been disabled to prevent system overload.")
+
+    st.markdown("""
+    ### Planned Features
+
+    **Sankey Diagrams**
+    - **RFI State Flow** — Visualize how RFIs transition between states (created → isolated → verified → complete)
+    - **Lock Chain** — Trace the physical lock chain: Worker → Padlock → LockBox → RFI
+    - **Vendor → Equipment** — Map which vendors work on which equipment through jobs
+
+    **Pre-built Reports**
+    - Isolation Point Frequency — Most-used isolation points ranked by usage
+    - Worker Lock Activity — Top workers by lock event count and average duration
+    - RFI State Distribution — Pie chart breakdown of RFI states
+    - Vendor Breakdown — Top 20 vendors by RFI count
+    - Daily Activity Timeline — 90-day trend of log events by type
+    - Top 20 Most Locked Equipment — Equipment ranked by distinct RFI count
+
+    **Ad-Hoc SQL**
+    - Custom read-only SQL queries with CSV download
+
+    These features will be re-enabled once query performance is optimized.
+    """)
 
 
 # ═══════════════════════════════════════════════════════════════
