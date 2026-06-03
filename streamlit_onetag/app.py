@@ -533,6 +533,9 @@ def show_sql(sql, label="SQL Query"):
     """Display a collapsible SQL query section."""
     with st.expander(f"📝 {label}", expanded=False):
         st.code(sql, language="sql")
+
+
+def fmt_duration(minutes):
     if pd.isna(minutes): return "-"
     h, m = divmod(int(minutes), 60)
     return f"{h}h {m}m" if h else f"{m}m"
