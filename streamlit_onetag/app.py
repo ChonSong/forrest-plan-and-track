@@ -59,21 +59,30 @@ THEME = {
 # ═══════════════════════════════════════════════════════════════
 
 
-@st.cache_resource(ttl=300)
+def _new_connection():
+    """Create a fresh DB connection every time (no stale cached connections)."""
+    for attempt in range(3):
+        try:
+            conn = pymssql.connect(**DB_CONFIG)
+            conn.autocommit(True)
+            return conn
+        except pymssql.OperationalError:
+            if attempt < 2:
+                import time
+                time.sleep(2)
+    return None
+
+
 def get_connection():
-    try:
-        conn = pymssql.connect(**DB_CONFIG)
-        conn.autocommit(True)
-        return conn
-    except pymssql.OperationalError as e:
-        st.error(f"⚠️ DB connection failed: {e}")
-        st.info("Run: `docker start sqlserver-onetag` on host")
-        return None
+    """Legacy wrapper — kept for any direct callers."""
+    return _new_connection()
 
 
 def check_connection():
+    conn = _new_connection()
+    if conn is None:
+        return False, "Cannot connect"
     try:
-        conn = pymssql.connect(**{**DB_CONFIG, "timeout": 5, "login_timeout": 5})
         cur = conn.cursor()
         cur.execute("SELECT @@VERSION")
         version = cur.fetchone()[0][:50]
@@ -85,20 +94,36 @@ def check_connection():
 
 @st.cache_data(ttl=60, show_spinner=False)
 def query(sql, params=None):
-    """Return list of dicts, retries once on failure."""
-    conn = get_connection()
+    """Return list of dicts. Opens a fresh connection each time to avoid timeouts."""
+    conn = _new_connection()
     if conn is None:
+        st.error("⚠️ Cannot connect to SQL Server. Run: `docker start sqlserver-onetag`")
         return []
     try:
         cur = conn.cursor(as_dict=True)
-        if params:
-            cur.execute(sql, params)
-        else:
-            cur.execute(sql)
+        cur.execute(sql, params) if params else cur.execute(sql)
         return cur.fetchmany(50000)
+    except pymssql.OperationalError:
+        # One retry with fresh connection
+        conn2 = _new_connection()
+        if conn2 is None:
+            st.error("⚠️ DB connection lost and retry failed.")
+            return []
+        try:
+            cur = conn2.cursor(as_dict=True)
+            cur.execute(sql, params) if params else cur.execute(sql)
+            return cur.fetchmany(50000)
+        except Exception as e:
+            st.error(f"Query error: {e}")
+            return []
     except Exception as e:
         st.error(f"Query error: {e}")
         return []
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def query_df(sql, params=None):
@@ -601,7 +626,7 @@ def page_lock_history(flt):
             st.metric("Median", fmt_duration(s["50%"]))
             st.metric("Max", fmt_duration(s["max"]))
             st.metric("Total", f"{len(df):,}")
-            st.metric("Total Hours", f"{s['sum'] / 60:,.0f}")
+            st.metric("Total Hours", f"{df['DurationMinutes'].sum() / 60:,.0f}")
 
 
 def page_rfi_logs(flt):
@@ -680,17 +705,10 @@ def page_analysis(flt):
 def get_job_timeframe_data():
     """
     Return a DataFrame comparing planned vs actual durations per job.
-    Uses lock activity (LockOnDate/LockOffDate) as the proxy for actual start/end
-    when real dates are available, falling back to planned dates.
-    Only completed jobs (JobState=2) with lock activity are included for training.
+    Uses lock activity (LockOnDate/LockOffDate) as proxy for actual start/end.
+    Kept lightweight to avoid timeouts.
     """
     rows = query("""
-        WITH IsoCounts AS (
-            SELECT ri.RFIId, COUNT(DISTINCT ri.IsolationPointId) AS IsolationPointCount
-            FROM RFIIsolations ri
-            WHERE ri.DeletedDate IS NULL
-            GROUP BY ri.RFIId
-        )
         SELECT
             j.Id,
             j.JobNumber,
@@ -707,14 +725,11 @@ def get_job_timeframe_data():
             MAX(rlrj.LockOffDate) AS ActualEnd,
             DATEDIFF(DAY, MIN(rlrj.LockOnDate), MAX(rlrj.LockOffDate)) AS ActualDurationDays,
             COUNT(DISTINCT rlrj.Id) AS LockEventCount,
-            COUNT(DISTINCT rj.RFIId) AS RFICount,
-            SUM(ic.IsolationPointCount) AS IsolationPointCount
+            COUNT(DISTINCT rj.RFIId) AS RFICount
         FROM Jobs j
         INNER JOIN Companies c ON j.CompanyId = c.Id
         LEFT JOIN StandardActivities sa ON j.StandardActivityId = sa.Id
-        INNER JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
-        INNER JOIN RFIs r ON rj.RFIId = r.Id AND r.DeletedDate IS NULL
-        LEFT JOIN IsoCounts ic ON r.Id = ic.RFIId
+        LEFT JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
         LEFT JOIN RFILocksRFIJobs rlrj ON rlrj.RFIJobId = rj.Id AND rlrj.DeletedDate IS NULL
         WHERE j.DeletedDate IS NULL
         GROUP BY j.Id, j.JobNumber, j.Description, j.JobState,
@@ -736,14 +751,13 @@ def get_job_timeframe_data():
     return df
 
 
-@st.cache_data(ttl=120, show_spinner=False)
-def get_prediction_dataset():
+def get_prediction_dataset(df=None):
     """
     Build a training dataset: completed jobs (JobState=2) with actual durations.
-    Features: vendor, planned duration, RFI count, isolation point count, lock events, standard activity.
-    Target: actual duration in days.
+    Accepts optional DataFrame to avoid re-querying.
     """
-    df = get_job_timeframe_data()
+    if df is None:
+        df = get_job_timeframe_data()
     if df.empty:
         return pd.DataFrame()
     completed = df[
@@ -1050,8 +1064,8 @@ def page_job_timeframes(flt):
             "Model: historical average duration per vendor + actual lock-event rate."
         )
 
-        # Get completed jobs for training
-        training = get_prediction_dataset()
+        # Get completed jobs for training (reuse the df we already loaded)
+        training = get_prediction_dataset(df)
         if training.empty:
             st.warning("No completed jobs with both planned and actual dates found for training.")
             return
@@ -1222,4 +1236,19 @@ pages = {
     "⏱️ Job Timeframes": page_job_timeframes,
     "📈 Analysis": page_analysis,
 }
-pages[page](Filters)
+
+# -- Reconnect button --
+st.sidebar.markdown("---")
+if st.sidebar.button("🔄 Reconnect DB"):
+    st.cache_data.clear()
+    st.rerun()
+
+# -- Error boundary --
+try:
+    pages[page](Filters)
+except Exception as e:
+    st.error(f"⚠️ Page error: {e}")
+    st.info("Try clicking '🔄 Reconnect DB' in the sidebar, or refresh the page.")
+    if st.button("Clear Cache & Retry"):
+        st.cache_data.clear()
+        st.rerun()
