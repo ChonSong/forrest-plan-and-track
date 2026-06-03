@@ -156,7 +156,7 @@ def jobs_isolations_equipment(date_from=None, date_to=None, iso=None, equip=None
     if active_only:
         cond.append("r.DeletedDate IS NULL AND i.DeletedDate IS NULL AND e.DeletedDate IS NULL")
     where = build_where(cond)
-    sql = f"""SELECT DISTINCT r.RFINumber, j.JobNumber, j.Description AS JobDescription,
+    sql = f"""SELECT DISTINCT TOP 50 r.RFINumber, j.JobNumber, j.Description AS JobDescription,
                      sa.StandardActivityNumber AS StandardActivity,
                      a.Number AS Activity, j.NoteNumber AS DocumentNumber,
                      i.Name AS IsolationPoint,
@@ -528,21 +528,21 @@ def page_dashboard(flt):
         with st.spinner("RFI state dist…"):
             df2 = query_df("SELECT RFIState, COUNT(*) AS Count FROM RFIs WHERE DeletedDate IS NULL GROUP BY RFIState ORDER BY RFIState")
             fig = chart_rfi_states(df2)
-            if fig: st.plotly_chart(fig, use_container_width=True)
+            if fig: st.plotly_chart(fig, width='stretch')
     with c2:
         with st.spinner("Isolation frequency…"):
             fig = chart_isolation_freq(query_df(isolation_frequency(15)), 15)
-            if fig: st.plotly_chart(fig, use_container_width=True)
+            if fig: st.plotly_chart(fig, width='stretch')
     c3, c4 = st.columns(2)
     with c3:
         with st.spinner("Worker activity…"):
             fig = chart_worker_activity(query_df(worker_lock_activity(15)), 15)
-            if fig: st.plotly_chart(fig, use_container_width=True)
+            if fig: st.plotly_chart(fig, width='stretch')
     with c4:
         with st.spinner("Lock duration…"):
             df3 = query_df("SELECT DATEDIFF(MINUTE, rlrj.LockOnDate, rlrj.LockOffDate) AS DurationMinutes FROM RFILocksRFIJobs rlrj WHERE rlrj.LockOffDate IS NOT NULL AND rlrj.DeletedDate IS NULL AND DATEDIFF(MINUTE, rlrj.LockOnDate, rlrj.LockOffDate) BETWEEN 1 AND 480")
             fig = chart_lock_histogram(df3)
-            if fig: st.plotly_chart(fig, use_container_width=True)
+            if fig: st.plotly_chart(fig, width='stretch')
 
 
 def page_rfi_jobs(flt):
@@ -556,10 +556,10 @@ def page_rfi_jobs(flt):
     c1, c2 = st.columns(2)
     with c1:
         fig = chart_vendor_breakdown(df)
-        if fig: st.plotly_chart(fig, use_container_width=True)
+        if fig: st.plotly_chart(fig, width='stretch')
     with c2:
         fig = chart_activity_heatmap(df, "CreatedDate" if "CreatedDate" in df.columns else None)
-        if fig: st.plotly_chart(fig, use_container_width=True)
+        if fig: st.plotly_chart(fig, width='stretch')
 
 
 def page_jobs_iso_equip(flt):
@@ -585,14 +585,14 @@ def page_lock_history(flt):
     c1, c2 = st.columns(2)
     with c1:
         fig = chart_activity_heatmap(df, "LockOnDate")
-        if fig: st.plotly_chart(fig, use_container_width=True)
+        if fig: st.plotly_chart(fig, width='stretch')
     with c2:
         fig = chart_lock_histogram(df)
-        if fig: st.plotly_chart(fig, use_container_width=True)
+        if fig: st.plotly_chart(fig, width='stretch')
     c3, c4 = st.columns(2)
     with c3:
         fig = chart_lock_timeline(df, 50)
-        if fig: st.plotly_chart(fig, use_container_width=True)
+        if fig: st.plotly_chart(fig, width='stretch')
     with c4:
         if "DurationMinutes" in df.columns:
             st.subheader("Lock Duration Stats")
@@ -625,15 +625,15 @@ def page_analysis(flt):
     if tab == "Sankey Diagrams":
         st.subheader("State Flow Sankey")
         fig = sankey_rfi_state_flow()
-        if fig: st.plotly_chart(fig, use_container_width=True)
+        if fig: st.plotly_chart(fig, width='stretch')
         else: st.info("Insufficient data for state flow Sankey — need more log entries.")
         st.subheader("Lock Chain Sankey")
         fig2 = sankey_lock_chain()
-        if fig2: st.plotly_chart(fig2, use_container_width=True)
+        if fig2: st.plotly_chart(fig2, width='stretch')
         else: st.info("No lock chains with LockBox assignments found in recent data.")
         st.subheader("Vendor → Equipment Sankey")
         fig3 = sankey_vendor_equipment()
-        if fig3: st.plotly_chart(fig3, use_container_width=True)
+        if fig3: st.plotly_chart(fig3, width='stretch')
         else: st.info("Insufficient data for vendor→equipment Sankey.")
     elif tab == "Pre-built Reports":
         report = st.selectbox("Report", [
@@ -656,7 +656,7 @@ def page_analysis(flt):
         if not df.empty:
             st.dataframe(df, use_container_width=True, height=400)
         if fig:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
     else:
         st.warning("⚠️ Only SELECT queries allowed.")
         sql = st.text_area("SQL", height=150, placeholder="SELECT TOP 10 * FROM Users WHERE DeletedDate IS NULL")
@@ -981,7 +981,7 @@ def page_job_timeframes(flt):
             plot_df = plot_df.sort_values(sort_by, ascending=False)
             fig = chart_gantt_comparison(plot_df, 30)
             if fig:
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
             # Data table with key columns
             st.caption(f"{len(plot_df):,} jobs matching filters")
@@ -1006,20 +1006,20 @@ def page_job_timeframes(flt):
         with c1:
             fig_var = chart_schedule_variance(completed_with_dates)
             if fig_var:
-                st.plotly_chart(fig_var, use_container_width=True)
+                st.plotly_chart(fig_var, width='stretch')
             else:
                 st.info("Insufficient variance data.")
         with c2:
             fig_scatter = chart_planned_vs_actual_scatter(completed_with_dates)
             if fig_scatter:
-                st.plotly_chart(fig_scatter, use_container_width=True)
+                st.plotly_chart(fig_scatter, width='stretch')
             else:
                 st.info("Insufficient scatter data.")
 
         st.subheader("Vendor Performance")
         fig_vendor = chart_vendor_performance(completed_with_dates)
         if fig_vendor:
-            st.plotly_chart(fig_vendor, use_container_width=True)
+            st.plotly_chart(fig_vendor, width='stretch')
         else:
             st.info("Insufficient vendor data (need ≥3 completed jobs per vendor).")
 
@@ -1170,7 +1170,7 @@ def page_job_timeframes(flt):
                 pd.DataFrame(),
             )
             if fig_pred:
-                st.plotly_chart(fig_pred, use_container_width=True)
+                st.plotly_chart(fig_pred, width='stretch')
 
 
 # ═══════════════════════════════════════════════════════════════
