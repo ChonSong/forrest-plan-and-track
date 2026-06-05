@@ -1683,6 +1683,268 @@ def page_gantt_jobs_isolations(flt):
 
 
 # ═══════════════════════════════════════════════════════════════
+#  CONSTRAINT ANALYZER — bottleneck gaps & concurrency
+# ═══════════════════════════════════════════════════════════════
+
+BOTTLENECK_SQL = """
+    SELECT
+        i.Id, i.Name AS IsolationPoint,
+        ia.Name AS Area,
+        COUNT(DISTINCT rj.JobId) AS JobCount,
+        COUNT(DISTINCT ri.Id) AS IsolationCount,
+        AVG(DATEDIFF(DAY, ri.AppliedDate, COALESCE(ri.RemovalDate, GETUTCDATE()))) AS AvgDurationDays,
+        MIN(DATEDIFF(DAY, ri.AppliedDate, COALESCE(ri.RemovalDate, GETUTCDATE()))) AS MinDurationDays,
+        MAX(DATEDIFF(DAY, ri.AppliedDate, COALESCE(ri.RemovalDate, GETUTCDATE()))) AS MaxDurationDays,
+        SUM(DATEDIFF(DAY, ri.AppliedDate, COALESCE(ri.RemovalDate, GETUTCDATE()))) AS TotalDays
+    FROM IsolationPoints i
+    INNER JOIN Areas ia ON i.AreaId = ia.Id
+    INNER JOIN RFIIsolations ri ON i.Id = ri.IsolationPointId AND ri.DeletedDate IS NULL
+        AND ri.AppliedDate IS NOT NULL
+        AND (ri.RemovalDate IS NULL OR ri.RemovalDate > '2000-01-01')
+    INNER JOIN RFIs r ON ri.RFIId = r.Id AND r.DeletedDate IS NULL
+    INNER JOIN RFIJobs rj ON rj.RFIId = r.Id AND rj.DeletedDate IS NULL
+    INNER JOIN Jobs j ON rj.JobId = j.Id AND j.DeletedDate IS NULL
+    WHERE i.DeletedDate IS NULL
+    GROUP BY i.Id, i.Name, ia.Name
+    HAVING COUNT(DISTINCT rj.JobId) >= 2
+"""
+
+ISOLATION_GAP_SQL = """
+    WITH IsoJobs AS (
+        SELECT ri.AppliedDate AS IsoStart,
+               COALESCE(ri.RemovalDate, GETUTCDATE()) AS IsoEnd,
+               ri.IsolationPointId,
+               j.JobNumber, j.Description AS JobDescription,
+               r.RFINumber
+        FROM RFIIsolations ri
+        INNER JOIN RFIs r ON ri.RFIId = r.Id AND r.DeletedDate IS NULL
+        INNER JOIN RFIJobs rj ON rj.RFIId = r.Id AND rj.DeletedDate IS NULL
+        INNER JOIN Jobs j ON rj.JobId = j.Id AND j.DeletedDate IS NULL
+        WHERE ri.DeletedDate IS NULL
+          AND ri.AppliedDate IS NOT NULL
+          AND (ri.RemovalDate IS NULL OR ri.RemovalDate > '2000-01-01')
+    )
+    SELECT *,
+           LAG(IsoEnd) OVER (PARTITION BY IsolationPointId ORDER BY IsoStart) AS PrevEnd,
+           DATEDIFF(DAY, LAG(IsoEnd) OVER (PARTITION BY IsolationPointId ORDER BY IsoStart), IsoStart) AS GapDays
+    FROM IsoJobs
+"""
+
+AREA_CONCURRENCY_SQL = """
+    SELECT
+        ia.Name AS Area,
+        COUNT(DISTINCT i.Id) AS IsolationPoints,
+        COUNT(DISTINCT ri.Id) AS IsolationEvents,
+        COUNT(DISTINCT rj.JobId) AS JobsAffected,
+        AVG(DATEDIFF(DAY, ri.AppliedDate, COALESCE(ri.RemovalDate, GETUTCDATE()))) AS AvgDurationDays
+    FROM Areas ia
+    INNER JOIN IsolationPoints i ON ia.Id = i.AreaId AND i.DeletedDate IS NULL
+    INNER JOIN RFIIsolations ri ON i.Id = ri.IsolationPointId AND ri.DeletedDate IS NULL
+        AND ri.AppliedDate IS NOT NULL
+        AND (ri.RemovalDate IS NULL OR ri.RemovalDate > '2000-01-01')
+    INNER JOIN RFIs r ON ri.RFIId = r.Id AND r.DeletedDate IS NULL
+    INNER JOIN RFIJobs rj ON rj.RFIId = r.Id AND rj.DeletedDate IS NULL
+    WHERE ia.DeletedDate IS NULL
+    GROUP BY ia.Name
+    ORDER BY JobsAffected DESC
+"""
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_bottleneck_data():
+    rows = query(BOTTLENECK_SQL)
+    return pd.DataFrame(rows) if rows else pd.DataFrame()
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_area_concurrency_data():
+    rows = query(AREA_CONCURRENCY_SQL)
+    return pd.DataFrame(rows) if rows else pd.DataFrame()
+
+
+def get_gap_timeline_for_point(point_id):
+    """Uncached — filtered by isolation point. Returns jobs + gap calculations."""
+    rows = query(
+        ISOLATION_GAP_SQL + " AND ri.IsolationPointId = %(pid)s",
+        {"pid": point_id},
+    )
+    df = pd.DataFrame(rows) if rows else pd.DataFrame()
+    if not df.empty:
+        df["IsoStart"] = pd.to_datetime(df["IsoStart"], utc=True)
+        df["IsoEnd"] = pd.to_datetime(df["IsoEnd"], utc=True)
+        df["GapDays"] = pd.to_numeric(df["GapDays"], errors="coerce")
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
+#  CONSTRAINT ANALYZER CHARTS
+# ═══════════════════════════════════════════════════════════════
+
+def chart_bottleneck_bar(df, top_n=20):
+    if df.empty:
+        return None
+    plot = df.head(top_n).copy()
+    fig = px.bar(plot, x="JobCount", y="IsolationPoint",
+                 color="AvgDurationDays", color_continuous_scale="Viridis",
+                 orientation="h",
+                 title=f"Top {top_n} Isolation Points by Job Count",
+                 labels={"JobCount": "Distinct Jobs", "IsolationPoint": "",
+                         "AvgDurationDays": "Avg Duration (d)"},
+                 hover_data={"Area": True, "IsolationCount": True,
+                             "AvgDurationDays": ":.0f", "MaxDurationDays": True})
+    fig.update_yaxes(categoryorder="total ascending")
+    return apply_theme(fig)
+
+
+def chart_area_concurrency(df):
+    if df.empty:
+        return None
+    fig = px.scatter(df, x="IsolationPoints", y="JobsAffected",
+                     size="IsolationEvents", color="AvgDurationDays",
+                     color_continuous_scale="Viridis",
+                     hover_data={"Area": True, "IsolationEvents": True},
+                     title="Area Overcrowding: Isolation Points vs Jobs Affected",
+                     labels={"IsolationPoints": "Isolation Points in Area",
+                             "JobsAffected": "Jobs Affected"})
+    return apply_theme(fig)
+
+
+def chart_gap_timeline(df):
+    """Timeline of isolation uses on a single point, with gaps highlighted."""
+    if df.empty:
+        return None
+    records = []
+    for _, r in df.iterrows():
+        gap = r.get("GapDays", 0)
+        gap_label = f"Gap: {gap:.0f}d" if pd.notna(gap) and gap > 0 else ""
+        records.append({
+            "Task": f"{r['JobNumber']}: {str(r['JobDescription'])[:40]}",
+            "Start": r["IsoStart"],
+            "End": r["IsoEnd"],
+            "Gap": gap_label,
+        })
+        if gap_label:
+            prev_end = r.get("PrevEnd")
+            if pd.notna(prev_end):
+                records.append({
+                    "Task": f"  ⬜ FREE: {gap:.0f}d gap",
+                    "Start": prev_end,
+                    "End": r["IsoStart"],
+                    "Gap": gap_label,
+                })
+    if not records:
+        return None
+    plot_df = pd.DataFrame(records)
+    plot_df["Color"] = plot_df["Gap"].apply(lambda g: "Gap" if g else "Job")
+    color_map = {"Job": "#3498db", "Gap": "#2ecc71"}
+    fig = px.timeline(plot_df, x_start="Start", x_end="End", y="Task",
+                      color="Color", color_discrete_map=color_map,
+                      title="Isolation Usage Timeline — jobs (blue) and free gaps (green)",
+                      labels={"Task": "", "Color": ""},
+                      hover_data={"Gap": True})
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout(height=max(300, len(records) * 22), showlegend=False)
+    mn, mx = plot_df["Start"].min(), plot_df["End"].max()
+    if pd.notna(mn) and pd.notna(mx) and mx > mn:
+        fig.update_xaxes(range=[mn - (mx - mn) * 0.02, mx + (mx - mn) * 0.02])
+    return apply_theme(fig)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  CONSTRAINT ANALYZER PAGE
+# ═══════════════════════════════════════════════════════════════
+
+def page_constraint_analyzer(flt):
+    st.title("🔧 Constraint & Opportunity Analyzer")
+    st.caption("Find scheduling gaps, bottleneck isolation points, and concurrency opportunities")
+
+    tab_bottleneck, tab_gaps, tab_areas = st.tabs([
+        "🔴 Bottleneck Points", "📅 Gap Timeline", "🗺️ Area Overcrowding"])
+
+    # ── TAB 1: Bottleneck Points ──
+    with tab_bottleneck:
+        with st.spinner("Analyzing isolation point usage…"):
+            df = get_bottleneck_data()
+        if df.empty:
+            st.warning("No bottleneck data available.")
+        else:
+            st.success(f"{len(df)} isolation points used by 2+ jobs")
+            max_n = st.slider("Show top N", 10, min(100, len(df)), 25)
+            fig = chart_bottleneck_bar(df, max_n)
+            if fig:
+                st.plotly_chart(fig, width='stretch')
+
+            # Data table
+            with st.expander("📋 All Bottleneck Points"):
+                display = ["IsolationPoint", "Area", "JobCount", "IsolationCount",
+                           "AvgDurationDays", "MinDurationDays", "MaxDurationDays", "TotalDays"]
+                available = [c for c in display if c in df.columns]
+                st.dataframe(df.sort_values("JobCount", ascending=False)[available],
+                             use_container_width=True, height=400)
+                csv = df[available].to_csv(index=False).encode()
+                st.download_button("📥 Download CSV", csv, "bottlenecks.csv", "text/csv")
+
+            with st.expander("📝 SQL Query"):
+                st.code(BOTTLENECK_SQL, language="sql")
+
+    # ── TAB 2: Gap Timeline ──
+    with tab_gaps:
+        with st.spinner("Loading isolation point list…"):
+            pts = query("SELECT Id, Name FROM IsolationPoints WHERE DeletedDate IS NULL ORDER BY Name")
+        if not pts:
+            st.warning("No isolation points found.")
+        else:
+            pt_options = {p["Name"]: p["Id"] for p in pts}
+            selected_pt = st.selectbox("Select an isolation point", list(pt_options.keys()))
+            point_id = pt_options[selected_pt]
+
+            with st.spinner(f"Loading timeline for {selected_pt}…"):
+                gap_df = get_gap_timeline_for_point(point_id)
+
+            if gap_df.empty:
+                st.info("No isolation events for this point.")
+            else:
+                # Stats
+                gaps = gap_df.dropna(subset=["GapDays"])
+                total_jobs = gap_df["JobNumber"].nunique()
+                total_events = len(gap_df)
+                avg_gap = gaps["GapDays"].mean() if not gaps.empty else 0
+                max_gap = gaps["GapDays"].max() if not gaps.empty else 0
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Jobs", total_jobs)
+                c2.metric("Isolation Events", total_events)
+                c3.metric("Avg Gap", f"{avg_gap:.0f}d" if avg_gap else "—")
+                c4.metric("Max Gap", f"{max_gap:.0f}d" if max_gap else "—")
+
+                fig = chart_gap_timeline(gap_df)
+                if fig:
+                    st.plotly_chart(fig, width='stretch')
+
+                with st.expander("📋 Event Timeline Data"):
+                    cols = ["JobNumber", "JobDescription", "RFINumber",
+                            "IsoStart", "IsoEnd", "PrevEnd", "GapDays"]
+                    avail = [c for c in cols if c in gap_df.columns]
+                    st.dataframe(gap_df.sort_values("IsoStart")[avail],
+                                 use_container_width=True, height=400)
+
+    # ── TAB 3: Area Overcrowding ──
+    with tab_areas:
+        with st.spinner("Analyzing area-level concurrency…"):
+            area_df = get_area_concurrency_data()
+        if area_df.empty:
+            st.warning("No area data available.")
+        else:
+            fig = chart_area_concurrency(area_df)
+            if fig:
+                st.plotly_chart(fig, width='stretch')
+
+            with st.expander("📋 Area Data"):
+                st.dataframe(area_df, use_container_width=True, height=400)
+                csv = area_df.to_csv(index=False).encode()
+                st.download_button("📥 Download CSV", csv, "areas.csv", "text/csv")
+
+
+# ═══════════════════════════════════════════════════════════════
 #  MAIN APP
 # ═══════════════════════════════════════════════════════════════
 
@@ -1700,7 +1962,7 @@ else:
     st.sidebar.info("Run: `docker start sqlserver-onetag` on host")
     st.stop()
 
-page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📊 Gantt Chart", "⏱️ Job Timeframes", "📈 Analysis"])
+page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📊 Gantt Chart", "⏱️ Job Timeframes", "🔧 Constraints", "📈 Analysis"])
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Filters")
@@ -1730,6 +1992,7 @@ pages = {
     "📜 RFI Log Timeline": page_rfi_logs,
     "📊 Gantt Chart": page_gantt_jobs_isolations,
     "⏱️ Job Timeframes": page_job_timeframes,
+    "🔧 Constraints": page_constraint_analyzer,
     "📈 Analysis": page_analysis,
 }
 
