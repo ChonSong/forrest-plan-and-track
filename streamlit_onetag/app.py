@@ -15,6 +15,48 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, timezone
 
+import hmac as _hmac
+import hashlib as _hashlib
+_AUTH_USER = "sa"
+_AUTH_PASS = "dawnofdarren"
+_SECRET = _hashlib.sha256(b"onetag-hmas-sydney-2026").hexdigest()
+_COOKIE_NAME = "session"
+_COOKIE_VALUE = _hmac.new(_SECRET.encode(), _AUTH_USER.encode(), _hashlib.sha256).hexdigest()[:16]
+def _get_cookie():
+    try:
+        cookies = st.context.headers.get("Cookie", "")
+        for part in cookies.split(";"):
+            part = part.strip()
+            if part.startswith(_COOKIE_NAME + "="):
+                val = part.split("=", 1)[1].strip()
+                if val == _COOKIE_VALUE:
+                    return True
+    except Exception:
+        pass
+    return False
+def _check_session():
+    return st.session_state.get("_authenticated", False)
+if not _get_cookie() and not _check_session():
+    st.set_page_config(page_title="OneTag \u2014 Login", page_icon="\U0001f3ed", layout="centered")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("\U0001f3ed OneTag HMAS Sydney")
+        st.subheader("Database Explorer \u2014 Log in to continue")
+        with st.form("login"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Log In", use_container_width=True)
+            if submitted:
+                if username == _AUTH_USER and password == _AUTH_PASS:
+                    st.session_state["_authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials")
+    st.stop()
+if _get_cookie() and not _check_session():
+    st.session_state["_authenticated"] = True
+
+
 # ═══════════════════════════════════════════════════════════════
 #  CONSTANTS
 # ═══════════════════════════════════════════════════════════════
@@ -270,6 +312,59 @@ def rfi_log_timeline(date_from=None, date_to=None, log_type=None, rfi_number=Non
     return sql, params
 
 
+def jobs_isolations_gantt_query(date_from=None, date_to=None, active_only=True):
+    """Combined query: Jobs (actual lock dates) + Isolations (AppliedDate/RemovalDate).
+    Returns one row per RFIIsolation, with job-level dates repeated.
+    CTE avoids cross-product between lock events and isolations.
+    Filters Gantt-invalid data (0001-01-01, start > end)."""
+    cond, params = [], {}
+    if date_from:
+        cond.append("ri.AppliedDate >= %(dfrom)s"); params["dfrom"] = date_from
+    if date_to:
+        cond.append("(ri.RemovalDate <= %(dto)s OR ri.RemovalDate IS NULL)"); params["dto"] = date_to
+    if active_only:
+        cond.append("j.DeletedDate IS NULL AND r.DeletedDate IS NULL "
+                     "AND ri.DeletedDate IS NULL AND i.DeletedDate IS NULL AND e.DeletedDate IS NULL")
+    where = build_where(cond)
+    sql = f"""WITH JobDateRange AS (
+    SELECT rj.JobId,
+           MIN(rlrj.LockOnDate) AS LockStart,
+           MAX(rlrj.LockOffDate) AS LockEnd
+    FROM RFIJobs rj
+    LEFT JOIN RFILocksRFIJobs rlrj ON rlrj.RFIJobId = rj.Id AND rlrj.DeletedDate IS NULL
+    WHERE rj.DeletedDate IS NULL
+    GROUP BY rj.JobId
+)
+SELECT j.Id AS JobId,
+       j.JobNumber, j.Description AS JobDescription,
+       j.JobState, j.OnHold, c.Name AS Vendor,
+       j.CreatedDate AS JobCreated,
+       jdr.LockStart, jdr.LockEnd,
+       r.RFINumber, r.Description AS RFIDescription,
+       ri.Id AS IsolationId,
+       i.Name AS IsolationPoint,
+       ia.Name AS Area,
+       e.Name AS Equipment,
+       ri.AppliedDate AS IsoStart,
+       ri.RemovalDate AS IsoEnd,
+       ri.RFIIsolationState,
+       CASE WHEN ri.RemovalDate IS NULL THEN 'Active' ELSE 'Removed' END AS IsoStatus
+FROM Jobs j
+INNER JOIN Companies c ON j.CompanyId = c.Id
+INNER JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
+INNER JOIN RFIs r ON rj.RFIId = r.Id AND r.DeletedDate IS NULL
+INNER JOIN RFIIsolations ri ON r.Id = ri.RFIId AND ri.DeletedDate IS NULL
+    AND ri.AppliedDate IS NOT NULL
+    AND (ri.RemovalDate IS NULL OR ri.RemovalDate > '2000-01-01')
+INNER JOIN IsolationPoints i ON ri.IsolationPointId = i.Id AND i.DeletedDate IS NULL
+INNER JOIN Areas ia ON i.AreaId = ia.Id
+INNER JOIN Equipment e ON ri.EquipmentId = e.Id AND e.DeletedDate IS NULL
+LEFT JOIN JobDateRange jdr ON jdr.JobId = j.Id
+{where}
+ORDER BY jdr.LockStart DESC NULLS LAST, j.JobNumber, ri.AppliedDate"""
+    return sql, params
+
+
 # ═══════════════════════════════════════════════════════════════
 #  ANALYTICAL QUERIES (for charts)
 # ═══════════════════════════════════════════════════════════════
@@ -358,11 +453,25 @@ def chart_lock_histogram(df, max_min=480):
 def chart_lock_timeline(df, max_events=100):
     if df.empty: return None
     df = df.head(max_events).copy()
+    df = df.dropna(subset=["LockOnDate", "LockOffDate"]).copy()
+    if df.empty:
+        return None
+    df = df[df["LockOnDate"] <= df["LockOffDate"]].copy()
+    if df.empty:
+        return None
     df["Label"] = df["Worker"] + " | " + df["Padlock"]
     fig = px.timeline(df, x_start="LockOnDate", x_end="LockOffDate", y="Label",
                       color="JobNumber", title=f"Lock On/Off Timeline (last {max_events})",
                       labels={"JobNumber": "Job"})
     fig.update_yaxes(autorange="reversed")
+    # Force x-axis to show all data — px.timeline's auto-range can clip bars
+    min_d = df["LockOnDate"].min()
+    max_d = df["LockOffDate"].max()
+    if pd.notna(min_d) and pd.notna(max_d) and max_d > min_d:
+        pad = (max_d - min_d) * 0.03
+        fig.update_xaxes(range=[min_d - pad, max_d + pad])
+    # Range slider for interactive zoom
+    fig.update_xaxes(rangeslider_visible=True, rangeslider_thickness=0.05)
     return apply_theme(fig)
 
 
@@ -389,6 +498,77 @@ def chart_activity_heatmap(df, date_col):
     fig = px.imshow(heat, title="Activity by Day & Hour",
                     labels=dict(x="Hour", y="Day", color="Events"),
                     color_continuous_scale="Viridis", aspect="auto")
+    return apply_theme(fig)
+
+
+def chart_jobs_isolations_gantt(df, top_n=25, search_term=None):
+    """Combined parent-child Gantt: Jobs (lock dates) as parent bars,
+    Isolations (AppliedDate→RemovalDate) as child bars underneath."""
+    if df.empty:
+        return None
+
+    # Build unified records preserving job→isolation hierarchy
+    records = []
+    jobs_df = df[["JobNumber", "JobDescription", "Vendor", "JobState",
+                  "LockStart", "LockEnd"]].drop_duplicates("JobNumber")
+    jobs_df = jobs_df.dropna(subset=["LockStart", "LockEnd"])
+    jobs_df = jobs_df[jobs_df["LockStart"] <= jobs_df["LockEnd"]]
+    if jobs_df.empty:
+        return None
+
+    if search_term:
+        mask = (jobs_df["JobDescription"].str.contains(search_term, case=False, na=False) |
+                jobs_df["JobNumber"].str.contains(search_term, case=False, na=False))
+        jobs_df = jobs_df[mask]
+    if jobs_df.empty:
+        return None
+
+    jobs_df = jobs_df.sort_values("LockStart", ascending=False).head(top_n)
+
+    state_labels = {0: "Cancelled", 1: "Active", 2: "Completed"}
+    for _, job in jobs_df.iterrows():
+        s = state_labels.get(job.get("JobState"), "Unknown")
+        records.append({
+            "Task": f"📋 {job['JobNumber']}: {str(job['JobDescription'])[:50]}",
+            "Start": job["LockStart"], "End": job["LockEnd"],
+            "Color": s, "Type": "Job",
+            "Detail": job["Vendor"],
+        })
+        iso_sub = df[df["JobNumber"] == job["JobNumber"]].copy()
+        iso_sub = iso_sub.dropna(subset=["IsoStart"])
+        for _, iso in iso_sub.iterrows():
+            e = iso["IsoEnd"] if pd.notna(iso["IsoEnd"]) else iso["IsoStart"] + pd.Timedelta(hours=1)
+            if iso["IsoStart"] <= e:
+                records.append({
+                    "Task": f"  └─ {iso['IsolationPoint']} ({iso['Equipment']})",
+                    "Start": iso["IsoStart"], "End": e,
+                    "Color": "Removed" if iso["IsoStatus"] == "Removed" else "Active",
+                    "Type": "Isolation",
+                    "Detail": f"{iso['Area']} | {iso['RFINumber']}",
+                })
+
+    if not records:
+        return None
+
+    plot_df = pd.DataFrame(records)
+    color_map = {"Completed": "#2ecc71", "Active": "#3498db",
+                 "Removed": "#95a5a6", "Cancelled": "#e74c3c"}
+
+    fig = px.timeline(
+        plot_df, x_start="Start", x_end="End", y="Task",
+        color="Color", color_discrete_map=color_map,
+        title=f"Jobs & Isolations Timeline (top {top_n} jobs)",
+        labels={"Task": "", "Color": "Status"},
+        hover_data={"Type": True, "Detail": True, "Start": "|%Y-%m-%d", "End": "|%Y-%m-%d"},
+        category_orders={"Color": ["Completed", "Active", "Removed", "Cancelled"]},
+    )
+    fig.update_yaxes(autorange="reversed", categoryorder="array",
+                     categoryarray=[r["Task"] for r in records])
+    fig.update_layout(height=max(500, len(records) * 20))
+    # Fix x-axis range
+    mn, mx = plot_df["Start"].min(), plot_df["End"].max()
+    if pd.notna(mn) and pd.notna(mx) and mx > mn:
+        fig.update_xaxes(range=[mn - (mx - mn) * 0.02, mx + (mx - mn) * 0.02])
     return apply_theme(fig)
 
 
@@ -1044,6 +1224,464 @@ def page_job_timeframes(flt):
     show_sql(TIMEFRAME_SQL, "Job Timeframe Query")
 
 
+GANTT_JOBS_SQL = """
+    SELECT
+        j.Id AS JobId, j.JobNumber, j.Description AS JobDescription,
+        j.JobState, j.OnHold, j.ControlledJob,
+        c.Name AS Vendor, sa.StandardActivityNumber,
+        MIN(rlrj.LockOnDate) AS JobStart,
+        MAX(rlrj.LockOffDate) AS JobEnd,
+        DATEDIFF(DAY, MIN(rlrj.LockOnDate), MAX(rlrj.LockOffDate)) AS DurationDays,
+        COUNT(DISTINCT rlrj.Id) AS LockEventCount,
+        COUNT(DISTINCT rj.RFIId) AS RFICount
+    FROM Jobs j
+    INNER JOIN Companies c ON j.CompanyId = c.Id
+    LEFT JOIN StandardActivities sa ON j.StandardActivityId = sa.Id
+    LEFT JOIN RFIJobs rj ON rj.JobId = j.Id AND rj.DeletedDate IS NULL
+    LEFT JOIN RFILocksRFIJobs rlrj ON rlrj.RFIJobId = rj.Id AND rlrj.DeletedDate IS NULL
+    WHERE j.DeletedDate IS NULL
+    GROUP BY j.Id, j.JobNumber, j.Description, j.JobState,
+             j.OnHold, j.ControlledJob, c.Name, sa.StandardActivityNumber
+    HAVING MIN(rlrj.LockOnDate) IS NOT NULL
+        AND MAX(rlrj.LockOffDate) > '2000-01-01'
+        AND MIN(rlrj.LockOnDate) <= MAX(rlrj.LockOffDate)
+"""
+
+GANTT_ISOLATIONS_SQL = """
+    SELECT
+        rj.JobId,
+        j.JobNumber,
+        r.RFINumber,
+        i.Name AS IsolationPoint,
+        ia.Name AS IsolationArea,
+        e.Name AS Equipment,
+        ri.AppliedDate AS IsoStart,
+        ri.RemovalDate AS IsoEnd,
+        ri.RFIIsolationState,
+        CASE WHEN ri.RemovalDate IS NULL THEN 'Active' ELSE 'Removed' END AS IsoStatus
+    FROM RFIIsolations ri
+    INNER JOIN RFIs r ON ri.RFIId = r.Id AND r.DeletedDate IS NULL
+    INNER JOIN IsolationPoints i ON ri.IsolationPointId = i.Id AND i.DeletedDate IS NULL
+    INNER JOIN Areas ia ON i.AreaId = ia.Id
+    LEFT JOIN Equipment e ON ri.EquipmentId = e.Id AND e.DeletedDate IS NULL
+    INNER JOIN RFIJobs rj ON rj.RFIId = r.Id AND rj.DeletedDate IS NULL
+    INNER JOIN Jobs j ON rj.JobId = j.Id AND j.DeletedDate IS NULL
+    WHERE ri.DeletedDate IS NULL
+        AND ri.AppliedDate IS NOT NULL
+        AND (ri.RemovalDate IS NULL OR ri.RemovalDate > '2000-01-01')
+"""
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_gantt_jobs_data():
+    """Return DataFrame with job timelines for Gantt chart."""
+    rows = query(GANTT_JOBS_SQL)
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    df["JobStart"] = pd.to_datetime(df["JobStart"], utc=True)
+    df["JobEnd"] = pd.to_datetime(df["JobEnd"], utc=True)
+    # Map JobState to label
+    state_map = {0: "Cancelled", 1: "Active", 2: "Completed"}
+    df["JobStateLabel"] = df["JobState"].map(state_map).fillna("Unknown")
+    return df
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_gantt_isolations_data():
+    """Return DataFrame with isolation timelines for Gantt chart."""
+    rows = query(GANTT_ISOLATIONS_SQL)
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    df["IsoStart"] = pd.to_datetime(df["IsoStart"], utc=True)
+    df["IsoEnd"] = pd.to_datetime(df["IsoEnd"], utc=True)
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GANTT CHART BUILDERS
+# ═══════════════════════════════════════════════════════════════
+
+# Color maps
+JOB_STATE_COLORS = {
+    "Completed": "#2ecc71",   # green
+    "Active": "#3498db",      # blue
+    "Cancelled": "#e74c3c",   # red
+    "Unknown": "#95a5a6",     # grey
+}
+
+ISO_STATUS_COLORS = {
+    "Active": "#e74c3c",      # red = still isolated
+    "Removed": "#2ecc71",     # green = removed/complete
+}
+
+
+def chart_gantt_jobs(df, max_jobs=30, color_by="JobStateLabel"):
+    """
+    Gantt chart for jobs using px.timeline.
+    Each job is a horizontal bar from JobStart to JobEnd.
+    Color-coded by JobState (Completed/Active/Cancelled).
+    X-axis auto-scales to the data range.
+    """
+    if df.empty:
+        return None
+
+    plot_df = df.sort_values("JobStart", ascending=False).head(max_jobs).copy()
+    plot_df["Label"] = plot_df["JobNumber"].str[:15] + ": " + plot_df["JobDescription"].str[:35]
+
+    fig = px.timeline(
+        plot_df,
+        x_start="JobStart",
+        x_end="JobEnd",
+        y="Label",
+        color=color_by,
+        color_discrete_map=JOB_STATE_COLORS,
+        title=f"Job Timeline — Top {len(plot_df)} Jobs by Start Date",
+        labels={"Label": "", "JobStateLabel": "Job State"},
+        hover_data={
+            "Vendor": True,
+            "LockEventCount": True,
+            "RFICount": True,
+            "DurationDays": True,
+            "JobStart": "|%Y-%m-%d %H:%M",
+            "JobEnd": "|%Y-%m-%d %H:%M",
+        },
+    )
+    fig.update_yaxes(autorange="reversed")
+
+    # Auto-scale x-axis to the actual data range
+    x_min = plot_df["JobStart"].min()
+    x_max = plot_df["JobEnd"].max()
+    padding = (x_max - x_min) * 0.05 if x_max > x_min else pd.Timedelta(days=1)
+    fig.update_xaxes(range=[x_min - padding, x_max + padding])
+
+    fig.update_layout(
+        height=max(400, len(plot_df) * 28),
+        xaxis_title="Timeline",
+    )
+    return apply_theme(fig)
+
+
+def chart_gantt_isolations(df, max_isos=50):
+    """
+    Gantt chart for isolations using px.timeline.
+    Each isolation is a horizontal bar from AppliedDate to RemovalDate.
+    Color-coded by status (Active/Removed).
+    X-axis auto-scales to the data range.
+    """
+    if df.empty:
+        return None
+
+    plot_df = df.sort_values("IsoStart", ascending=False).head(max_isos).copy()
+    equip = plot_df["Equipment"].fillna("").str[:20]
+    plot_df["Label"] = (
+        plot_df["IsolationPoint"].str[:25] + " — " +
+        equip + " (" +
+        plot_df["JobNumber"].str[:10] + ")"
+    )
+
+    fig = px.timeline(
+        plot_df,
+        x_start="IsoStart",
+        x_end="IsoEnd",
+        y="Label",
+        color="IsoStatus",
+        color_discrete_map=ISO_STATUS_COLORS,
+        title=f"Isolation Timeline — Applied to Removal (Top {len(plot_df)})",
+        labels={"Label": "", "IsoStatus": "Status"},
+        hover_data={
+            "JobNumber": True,
+            "RFINumber": True,
+            "IsolationArea": True,
+            "IsoStart": "|%Y-%m-%d %H:%M",
+            "IsoEnd": "|%Y-%m-%d %H:%M",
+        },
+    )
+    fig.update_yaxes(autorange="reversed")
+
+    # Auto-scale x-axis to the actual data range
+    x_min = plot_df["IsoStart"].min()
+    x_max = plot_df["IsoEnd"].max()
+    padding = (x_max - x_min) * 0.05 if x_max > x_min else pd.Timedelta(days=1)
+    fig.update_xaxes(range=[x_min - padding, x_max + padding])
+
+    fig.update_layout(
+        height=max(400, len(plot_df) * 22),
+        xaxis_title="Timeline",
+    )
+    return apply_theme(fig)
+
+
+def chart_gantt_cross_section(records):
+    """Render a cross-section Gantt from a pre-built records list.
+    Each record: {Task, Start, End, Color, Detail}
+    Relationship colors:
+      Throughout (purple)  — isolation covers the job's *entire* duration
+      Started earlier (orange) — isolation began before the job, ended during it
+      Ends later (red)     — isolation began during the job, extends past it
+      Fits within (green)  — isolation applied and removed inside the job window"""
+    if not records:
+        return None
+    plot_df = pd.DataFrame(records)
+    color_map = {"Job": "#3498db", "Fits within": "#2ecc71",
+                 "Started earlier": "#e67e22", "Ends later": "#e74c3c",
+                 "Throughout": "#9b59b6"}
+    job_count = plot_df["Task"].str.contains("📋", na=False).sum()
+    n_isos = len(plot_df) - job_count
+    fig = px.timeline(plot_df, x_start="Start", x_end="End", y="Task",
+                      color="Color", color_discrete_map=color_map,
+                      title=f"Cross-section: {job_count} jobs, {n_isos} related isolations",
+                      labels={"Task": "", "Color": "Relationship"},
+                      hover_data={"Detail": True, "Start": "|%Y-%m-%d", "End": "|%Y-%m-%d"},
+                      category_orders={"Color": ["Job", "Fits within", "Started earlier", "Ends later", "Throughout"]})
+    fig.update_yaxes(autorange="reversed", categoryorder="array",
+                     categoryarray=[r["Task"] for r in records])
+    fig.update_layout(height=max(300, len(records) * 20))
+    mn, mx = plot_df["Start"].min(), plot_df["End"].max()
+    if pd.notna(mn) and pd.notna(mx) and mx > mn:
+        fig.update_xaxes(range=[mn - (mx - mn) * 0.01, mx + (mx - mn) * 0.01])
+    return apply_theme(fig)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GANTT PAGE
+# ═══════════════════════════════════════════════════════════════
+
+def page_gantt_jobs_isolations(flt):
+    st.title("📊 Gantt Chart — Jobs & Isolations")
+    st.caption("Search jobs, explore timelines, and view isolation periods")
+
+    # ── Search & Filter Panel ──
+    with st.expander("🔍 Search & Filters", expanded=True):
+        fcol1, fcol2, fcol3, fcol4 = st.columns(4)
+        with fcol1:
+            search_job = st.text_input("Job Number / Description", placeholder="e.g. WO-SYD-00004869")
+        with fcol2:
+            filter_vendor = st.text_input("Vendor", placeholder="e.g. BHP")
+        with fcol3:
+            filter_state = st.multiselect(
+                "Job State",
+                options=["Completed", "Active", "Cancelled"],
+                default=["Completed", "Active", "Cancelled"],
+            )
+        with fcol4:
+            iso_status_filter = st.multiselect(
+                "Isolation Status",
+                options=["Active", "Removed"],
+                default=["Active", "Removed"],
+            )
+
+        dcol1, dcol2 = st.columns(2)
+        with dcol1:
+            date_from = st.date_input("From", value=None, help="Filter jobs starting after this date")
+        with dcol2:
+            date_to = st.date_input("To", value=None, help="Filter jobs ending before this date")
+
+    # ── Load Data ──
+    col1, col2 = st.columns(2)
+    with col1:
+        with st.spinner("Loading jobs…"):
+            jobs_df = get_gantt_jobs_data()
+    with col2:
+        with st.spinner("Loading isolations…"):
+            iso_df = get_gantt_isolations_data()
+
+    if jobs_df.empty:
+        st.warning("No job timeline data found.")
+        return
+
+    # ── Apply Filters ──
+    filtered_jobs = jobs_df.copy()
+
+    if search_job:
+        mask = (
+            filtered_jobs["JobNumber"].str.contains(search_job, case=False, na=False) |
+            filtered_jobs["JobDescription"].str.contains(search_job, case=False, na=False)
+        )
+        filtered_jobs = filtered_jobs[mask]
+
+    if filter_vendor:
+        filtered_jobs = filtered_jobs[filtered_jobs["Vendor"].str.contains(filter_vendor, case=False, na=False)]
+
+    if filter_state:
+        filtered_jobs = filtered_jobs[filtered_jobs["JobStateLabel"].isin(filter_state)]
+
+    if date_from:
+        filtered_jobs = filtered_jobs[filtered_jobs["JobStart"] >= pd.Timestamp(date_from, tz="UTC")]
+
+    if date_to:
+        filtered_jobs = filtered_jobs[filtered_jobs["JobEnd"] <= pd.Timestamp(date_to, tz="UTC")]
+
+    # Filter isolations to match
+    if not iso_df.empty and iso_status_filter:
+        iso_df = iso_df[iso_df["IsoStatus"].isin(iso_status_filter)]
+
+    # ── KPI Cards ──
+    total_jobs = len(filtered_jobs)
+    completed = len(filtered_jobs[filtered_jobs["JobState"] == 2])
+    active = len(filtered_jobs[filtered_jobs["JobState"] == 1])
+    cancelled = len(filtered_jobs[filtered_jobs["JobState"] == 0])
+    total_isos = len(iso_df) if not iso_df.empty else 0
+    active_isos = len(iso_df[iso_df["IsoStatus"] == "Active"]) if not iso_df.empty else 0
+
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Jobs", f"{total_jobs:,}")
+    c2.metric("Completed", f"{completed:,}")
+    c3.metric("Active", f"{active:,}")
+    c4.metric("Cancelled", f"{cancelled:,}")
+    c5.metric("Isolations", f"{total_isos:,}")
+    c6.metric("Active Isolations", f"{active_isos:,}")
+
+    if total_jobs == 0:
+        st.info("No jobs match your filters. Try broadening your search.")
+        return
+
+    # ── View Selector ──
+    view = st.radio(
+        "View",
+        ["📋 Jobs Only", "🔒 Isolations Only", "🎯 Job + Related Isos"],
+        horizontal=True,
+    )
+
+    if view == "📋 Jobs Only":
+        max_jobs = st.slider("Max jobs to display", 1, 50, 25)
+        fig = chart_gantt_jobs(filtered_jobs, max_jobs)
+        if fig:
+            st.plotly_chart(fig, width='stretch')
+
+    elif view == "🔒 Isolations Only":
+        max_isos = st.slider("Max isolations to display", 1, 100, 40)
+        if iso_df.empty:
+            st.info("No isolation data available.")
+        else:
+            fig = chart_gantt_isolations(iso_df, max_isos)
+            if fig:
+                st.plotly_chart(fig, width='stretch')
+
+    elif view == "🎯 Job + Related Isos":
+        st.caption(
+            "Select one or more jobs to see their lock periods and all related isolations. "
+            "Isolations are colored by their relationship to each job's timeline."
+        )
+        # Build a clean job picker
+        picker_df = filtered_jobs[["JobNumber", "JobDescription", "Vendor", "JobStart",
+                                    "JobEnd", "DurationDays", "JobStateLabel"]].copy()
+        picker_df["Label"] = picker_df["JobNumber"] + ": " + picker_df["JobDescription"].str[:50]
+        picker_df = picker_df.dropna(subset=["JobStart", "JobEnd"])
+        if picker_df.empty:
+            st.info("No jobs with valid lock dates to select.")
+        else:
+            picker_df = picker_df.sort_values("JobStart", ascending=False)
+            selected_labels = st.multiselect(
+                "Select jobs to compare",
+                picker_df["Label"].tolist(),
+                help="Each selected job shows as a blue bar with its related isolations below",
+            )
+
+            if selected_labels:
+                all_records = []
+                sentences = []
+                for label in selected_labels:
+                    job = picker_df[picker_df["Label"] == label].iloc[0]
+                    js, je = job["JobStart"], job["JobEnd"]
+
+                    # All isolations linked to this job via RFIJobs → RFIs → RFIIsolations
+                    related = iso_df[
+                        iso_df["JobNumber"] == job["JobNumber"]
+                    ].copy()
+
+                    # Classify & count relationships
+                    rel_counts = {"Fits within": 0, "Started earlier": 0,
+                                  "Ends later": 0, "Throughout": 0}
+
+                    # Job bar
+                    all_records.append({
+                        "Task": f"📋 {job['JobNumber']}: {str(job['JobDescription'])[:45]}",
+                        "Start": js, "End": je,
+                        "Color": "Job",
+                        "Detail": f"{job.get('Vendor','')}",
+                    })
+
+                    # Isolation bars
+                    for _, iso in related.iterrows():
+                        ie = iso["IsoEnd"] if pd.notna(iso["IsoEnd"]) else je
+                        if iso["IsoStart"] <= ie:
+                            if iso["IsoStart"] < js and (pd.isna(iso["IsoEnd"]) or iso["IsoEnd"] > je):
+                                rel = "Throughout"
+                            elif iso["IsoStart"] < js:
+                                rel = "Started earlier"
+                            elif pd.isna(iso["IsoEnd"]) or iso["IsoEnd"] > je:
+                                rel = "Ends later"
+                            else:
+                                rel = "Fits within"
+                            rel_counts[rel] += 1
+                            equip = iso["Equipment"] if pd.notna(iso["Equipment"]) else ""
+                            equip_str = f" ({equip})" if pd.notna(equip) and equip else ""
+                            all_records.append({
+                                "Task": f"  {iso['IsolationPoint']}{equip_str}",
+                                "Start": iso["IsoStart"], "End": ie,
+                                "Color": rel,
+                                "Detail": f"{iso.get('IsolationArea','')} | {iso.get('RFINumber','')} | {rel}",
+                            })
+
+                    # Generate sentence
+                    dur = int(job.get("DurationDays", 0) or 0)
+                    state = job.get("JobStateLabel", "Unknown")
+                    total_isos = sum(rel_counts.values())
+                    bits = [f"**{job['JobNumber']}** — {str(job['JobDescription'])[:60]}"]
+                    bits.append(f"Lasted **{dur} day{'s' if dur != 1 else ''}** ({state})")
+
+                    if total_isos > 0:
+                        detail = []
+                        for rt in ["Fits within", "Started earlier", "Ends later", "Throughout"]:
+                            if rel_counts[rt] > 0:
+                                detail.append(f"{rel_counts[rt]} {rt.lower()}")
+                        bits.append(f"{total_isos} related isolation{'s' if total_isos != 1 else ''}: {', '.join(detail)}")
+                    else:
+                        bits.append("No related isolations")
+
+                    sentences.append(" — ".join(bits))
+
+                # Display generated sentences
+                for s in sentences:
+                    st.markdown(f"• {s}")
+
+                total_jobs_charted = sum(1 for r in all_records if r["Color"] == "Job")
+                if total_jobs_charted > 0:
+                    fig = chart_gantt_cross_section(all_records)
+                    if fig:
+                        st.plotly_chart(fig, width='stretch')
+                else:
+                    st.info("No data to display for the selected jobs.")
+
+    # ── Data Tables ──
+    tab1, tab2 = st.tabs(["📋 Jobs Data", "🔒 Isolations Data"])
+    with tab1:
+        display_cols = ["JobNumber", "JobDescription", "Vendor", "JobStateLabel",
+                        "JobStart", "JobEnd", "DurationDays", "LockEventCount", "RFICount"]
+        available = [c for c in display_cols if c in filtered_jobs.columns]
+        st.dataframe(filtered_jobs[available], use_container_width=True, height=400)
+        st.download_button("📥 Download Jobs CSV",
+                           filtered_jobs[available].to_csv(index=False).encode(),
+                           "gantt_jobs.csv", "text/csv")
+    with tab2:
+        if not iso_df.empty:
+            iso_display = ["JobNumber", "RFINumber", "IsolationPoint", "Equipment",
+                           "IsolationArea", "IsoStart", "IsoEnd", "IsoStatus"]
+            avail = [c for c in iso_display if c in iso_df.columns]
+            st.dataframe(iso_df[avail], use_container_width=True, height=400)
+            st.download_button("📥 Download Isolations CSV",
+                               iso_df[avail].to_csv(index=False).encode(),
+                               "gantt_isolations.csv", "text/csv")
+        else:
+            st.info("No isolation data.")
+
+    with st.expander("📝 SQL Queries", expanded=False):
+        st.caption("Jobs Query")
+        st.code(GANTT_JOBS_SQL, language="sql")
+        st.caption("Isolations Query")
+        st.code(GANTT_ISOLATIONS_SQL, language="sql")
+
+
 # ═══════════════════════════════════════════════════════════════
 #  MAIN APP
 # ═══════════════════════════════════════════════════════════════
@@ -1062,7 +1700,7 @@ else:
     st.sidebar.info("Run: `docker start sqlserver-onetag` on host")
     st.stop()
 
-page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "⏱️ Job Timeframes", "📈 Analysis"])
+page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📊 Gantt Chart", "⏱️ Job Timeframes", "📈 Analysis"])
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Filters")
@@ -1090,6 +1728,7 @@ pages = {
     "🔗 Jobs → Isolations → Equipment": page_jobs_iso_equip,
     "🔒 Lock History": page_lock_history,
     "📜 RFI Log Timeline": page_rfi_logs,
+    "📊 Gantt Chart": page_gantt_jobs_isolations,
     "⏱️ Job Timeframes": page_job_timeframes,
     "📈 Analysis": page_analysis,
 }
