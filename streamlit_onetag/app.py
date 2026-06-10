@@ -764,6 +764,11 @@ def page_findings(flt):
     # Cache the result — re-run only when button is clicked
     @st.cache_data(ttl=3600, show_spinner="Running Forrest analysis passes…")
     def _run_forrest():
+        import sys as _sys
+        # Ensure the repo root is in path for engine imports
+        _repo_root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+        if _repo_root not in _sys.path:
+            _sys.path.insert(0, _repo_root)
         import sqlite3 as _sqlite3
         _conn = _sqlite3.connect(_db_path)
         _conn.row_factory = _sqlite3.Row
