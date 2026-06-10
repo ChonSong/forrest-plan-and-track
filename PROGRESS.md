@@ -1,73 +1,73 @@
 # Progress Board
 
-> Update this file daily. Single source of truth for mission status.
+> **Mission:** Transform the Forrest concept from a Claude-driven simulation loop into a deterministic data analysis engine over the OneTag HMAS database.
 
-## Status: 🟡 In Progress
+## Status: ✅ Complete
 
-**Current phase:** Day 0 — Planning & repo setup
-**Started:** 2026-06-01
-**Target completion:** 2026-06-14
+**Completed:** 2026-06-09
 
 ## Phase Tracker
 
-| # | Phase | Days | Status | Notes |
-|---|-------|------|--------|-------|
-| 0 | Read & prep | Day 0 | 🔵 Complete | Plan repo created |
-| 1 | Environment setup | Day 1 | ⬜ Not started | Blocked: repo URL, API key |
-| 2 | Code tour + smoke test | Day 2 | ⬜ Not started | |
-| 3 | Scenario selection | Day 3 | ⬜ Not started | |
-| 4-7 | Tuning & iteration | Day 4-7 | ⬜ Not started | |
-| 8-10 | Final runs | Day 8-10 | ⬜ Not started | |
-| 11-13 | Polish & rehearse | Day 11-13 | ⬜ Not started | |
-| 14 | Demo day | Day 14 | ⬜ Not started | |
+| # | Phase | Status | Notes |
+|---|-------|--------|-------|
+| 1 | Foundation (clone, schema, seed data) | ✅ Complete | 103 tables, 50 RFIs, 40 jobs, 12 users, 256 RFI logs, 500 event logs |
+| 2 | Rewrite engine concept (docs) | ✅ Complete | FORREST-MODEL.md + SCENARIO.md rewritten for data analysis |
+| 3 | Analysis engine (passes + runner) | ✅ Complete | 4 pass categories: anomalies, patterns, relations, statistics. 14+ findings |
+| 4 | Dashboard integration | ✅ Complete | "🚀 Forrest Findings" page in Streamlit with score progress bars, SQL view |
+| 5 | Planning docs update | ✅ Complete | PLAN.md, PROGRESS.md, README.md |
 
-## Blockers
+## Repo Structure
 
-| Blocker | Status | Action Needed |
-|---------|--------|--------------|
-| Forrest repo URL (`<org>`) | 🔴 Blocking Day 1 | Confirm org name |
-| Anthropic API key | 🔴 Blocking Day 1 | Request from #forrest-eng |
-| Team channels (Slack) | 🟡 Partial | Hybrid mode — some real, some self-managed |
+```
+forrest-plan-and-track/
+├── README.md
+├── PLAN.md                     ← Updated for data analysis engine
+├── FORREST-MODEL.md            ← Rewritten — Query→Analyze→Rank loop
+├── SCENARIO.md                 ← Rewritten — OneTag HMAS domain
+├── PROGRESS.md                 ← You are here
+├── DEMO.md
+├── data/
+│   └── onetag.db               ← SQLite DB with seeded sample data (1.4MB)
+├── prisma/
+│   ├── schema.prisma           ← Full OneTag schema (80+ models, 65KB)
+│   ├── schema.sqlite.sql       ← SQLite CREATE TABLE statements
+│   └── schema.columns.txt      ← Column reference for all tables
+├── engine/
+│   ├── __init__.py
+│   ├── runner.py               ← Main entry point
+│   ├── scoring.py              ← Finding scoring (severity × specificity × surprise)
+│   ├── findings.py             ← Finding data model
+│   └── passes/
+│       ├── anomalies.py        ← Orphaned FKs, date errors, inconsistent states
+│       ├── patterns.py         ← Usage hotspots, peak periods, workflow paths
+│       ├── relations.py        ← Cross-entity correlations (area vs defects, vendor perf)
+│       └── stats.py            ← Distributions, percentiles, utilization rates
+├── streamlit_onetag/
+│   └── app.py                  ← Dashboard with "🚀 Forrest Findings" page
+├── scripts/
+│   └── seed_data.py            ← Schema-aware seed script (auto-fills NOT NULL cols)
+└── notes/
+    └── onetag-hmas-analysis.md ← Full schema analysis from .bak file
+```
 
-## Experiment Log Summary
+## Key Metrics
 
-| Run | Day | Expts | Sims/Expt | Status | Cost | Key Finding |
-|-----|-----|-------|-----------|--------|------|-------------|
-| 001 | 2 | 50 | 500 | ⬜ | — | Smoke test |
-| 002 | 4 | 50 | 200 | ⬜ | — | Tuning #1 |
-| 003 | 5 | 50 | 200 | ⬜ | — | Tuning #2 |
-| 004 | 6 | 50 | 200 | ⬜ | — | Tuning #3 |
-| 005 | 7 | 50 | 500 | ⬜ | — | Dress rehearsal |
-| 006 | 8 | 200 | 500 | ⬜ | — | Final #1 |
-| 007 | 10 | 200 | 500 | ⬜ | — | Final #2 |
-
-**Total estimated cost:** ~$8-12 (well within $50 budget)
+| Metric | Value |
+|--------|-------|
+| Database tables | 103 |
+| Seeded RFIs | 50 |
+| Active dashboard pages | 10 |
+| Analysis pass categories | 4 |
+| Typical findings per run | 14+ |
+| Engine runtime | < 0.1s |
+| Database size | 1.4 MB |
 
 ## Key Decisions Log
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-06-01 | Domain: Project scheduling (critical path) | Most legible, naturally stochastic, surprising findings possible |
-| 2026-06-01 | Repo: `ChonSong/forrest-plan-and-track` (public) | Transparency, shareable |
-| 2026-06-01 | Diagrams: Mermaid + HTML | Native Markdown rendering + rich visuals |
-| 2026-06-01 | Experiment log: Full (scores, findings, lineage) | Maximum reproducibility and learning |
-
-## Week 1 Review Prep
-
-### Three Things Notebook
-
-#### (a) Things I Don't Understand
-- [ ] How does the engine decide which mutation to propose next? (Random? Heuristic? LLM-driven?)
-- [ ] What's the acceptance tolerance? (How much better must a score be to commit?)
-- [ ] How are findings extracted from the experiment log? (Dedicated Claude call? Template?)
-
-#### (b) Things That Look Fragile
-- [ ] The loop runs server-side — what happens if the dev server restarts mid-run?
-- [ ] Prisma SQLite — concurrent access from dashboard polling + engine writes?
-- [ ] Claude API rate limits during a 200-experiment run?
-
-#### (c) Assumptions Baked Into the Engine
-- [ ] Forrest minimizes by default — objectives must be signed correctly
-- [ ] Soft constraints introduce noise — hard constraints preferred
-- [ ] Mutation space design directly controls acceptance rate
-- [ ] Findings quality is a function of experiment diversity, not the extraction prompt
+| 2026-06-09 | Data analysis engine instead of Claude simulation | No API key available; real data to analyze |
+| 2026-06-09 | SQLite instead of SQL Server | Portable, no Docker dependencies, works in container |
+| 2026-06-09 | Schema-aware seed script | 431 NOT NULL columns need auto-fill; PRAGMA-driven approach |
+| 2026-06-09 | 4 analysis categories (anomaly/pattern/relation/stat) | Covers all interesting query types for HMAS data |
+| 2026-06-09 | Forrest Findings in Streamlit dashboard | One app for both exploration and analysis |

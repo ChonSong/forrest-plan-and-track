@@ -1,80 +1,84 @@
 # Forrest Plan & Track
 
-> **Mission:** Prove that Forrest — an autonomous Monte Carlo optimization engine — can find non-obvious, actionable insights on a scenario nobody on the team has touched. Two weeks. 200 experiments. Three findings. One 15-minute share-out.
+> **Mission:** Transform Forrest from a Claude-driven simulation concept into a working data analysis engine over the OneTag HMAS database. No API keys. No external services. Just structured analysis over real industrial data.
 
 ## The Promise
 
-Your plan runs once. Forrest runs it 10,000 times.
+Your schema loads once. Forrest runs it in 0.1 seconds. Three findings emerge.
 
 ## North Star
 
-At the end of two weeks, a non-technical viewer should be able to read your three findings and say *"that's actually useful — I'd act on that."* Plain language beats clever modelling.
+A non-technical viewer should be able to read the three findings and say *"that's actually useful — I'd act on that."* Plain language beats clever modelling.
 
 ## Repo Structure
 
 ```
 forrest-plan-and-track/
 ├── README.md              ← You are here
-├── PLAN.md                ← Full 14-day plan with daily tasks
-├── FORREST-MODEL.md       ← Mental model of the engine (read before coding)
-├── SCENARIO.md            ← Demo scenario brief (project scheduling)
+├── PLAN.md                ← Full plan (updated for data analysis)
+├── FORREST-MODEL.md       ← Engine: Query→Analyze→Rank loop
+├── SCENARIO.md            ← OneTag HMAS domain description
 ├── DEMO.md                ← Demo day presentation outline
-├── PROGRESS.md            ← Running status board (update daily)
-├── diagrams/
-│   ├── engine-loop.html   ← Interactive engine loop visualization
-│   ├── data-model.html    ← 4-entity data model
-│   └── timeline.html      ← 14-day Gantt-style timeline
-├── experiments/
-│   ├── TEMPLATE.md        ← Copy for each run
-│   ├── run-001-smoke.md   ← Day 2: 50-experiment smoke test
-│   ├── run-002-tuning-1.md
-│   ├── run-003-tuning-2.md
-│   ├── run-004-tuning-3.md
-│   ├── run-005-dress.md
-│   ├── run-006-final-1.md ← Day 8: First 200-experiment run
-│   └── run-007-final-2.md ← Day 10: Confidence check
-├── daily-logs/
-│   ├── TEMPLATE.md        ← Daily standup log template
-│   ├── day-00.md
-│   ├── day-01.md
-│   └── ...
-│   └── day-14.md
-└── notes/
-    ├── code-tour.md       ← Notes from reading the codebase
-    ├── gotchas.md         ← Things that have bitten
-    ├── tuning-log.md      ← What you changed and why
-    └── three-things.md    ← Week 1 review prep (fragile things, unknowns, assumptions)
+├── PROGRESS.md            ← Running status board
+├── data/
+│   └── onetag.db          ← SQLite database (seeded sample data)
+├── engine/
+│   ├── runner.py          ← Main entry point
+│   ├── findings.py        ← Finding data model
+│   ├── scoring.py         ← Finding scoring
+│   └── passes/
+│       ├── anomalies.py   ← Data integrity checks
+│       ├── patterns.py    ← Usage pattern recognition
+│       ├── relations.py   ← Cross-entity correlations
+│       └── stats.py       ← Statistical distributions
+├── streamlit_onetag/
+│   └── app.py             ← Dashboard with "🚀 Forrest Findings" page
+├── prisma/
+│   ├── schema.prisma      ← Full OneTag data model
+│   └── schema.sqlite.sql  ← SQLite CREATE TABLE statements
+├── scripts/
+│   └── seed_data.py       ← Database seed script
+├── diagrams/              ← Mermaid + HTML visualizations
+├── experiments/           ← Experiment log templates
+├── daily-logs/            ← Daily standup templates
+└── notes/                 ← Analysis notes and gotchas
 ```
 
 ## Status
 
-| Phase | Target | Status |
-|-------|--------|--------|
-| Day 0: Read & prep | Notebook ready | ⬜ Not started |
-| Day 1: Environment | Forrest running locally | ⬜ Not started |
-| Day 2: Smoke test | 50-experiment run complete | ⬜ Not started |
-| Day 3: Scenario brief | Brief written & approved | ⬜ Not started |
-| Day 4-7: Tuning | 4 tuning runs, story emerging | ⬜ Not started |
-| Day 8-10: Final runs | 2× 200-experiment runs | ⬜ Not started |
-| Day 11-13: Polish | Presentation rehearsed | ⬜ Not started |
-| Day 14: Demo day | 15-min share-out | ⬜ Not started |
+| Phase | Status |
+|-------|--------|
+| Foundation (schema + seed data) | ✅ Complete |
+| Engine concept rewrite | ✅ Complete |
+| Analysis engine (4 pass categories) | ✅ Complete |
+| Dashboard integration (Findings page) | ✅ Complete |
+| Documentation | ✅ Complete |
 
-## Key Resources
+## How to Run
 
-- **Forrest engine repo:** `git@github.com:<TBD>/forrest.git` *(org name pending)*
-- **API key:** Request from #forrest-eng *(sandbox key with per-day spend cap)*
-- **Budget:** $50 for two weeks
-- **In-repo docs:** `AGENTS.md` (Next.js 16 deltas), `README.md`, `/security` page
+```bash
+# 1. Seed the database
+python scripts/seed_data.py
+
+# 2. Run the analysis engine (CLI)
+python -m engine.runner --top 5
+python -m engine.runner --top 3 --json
+
+# 3. Launch the dashboard
+# (requires SQL Server connection for existing pages,
+#  findings page uses local SQLite)
+cd streamlit_onetag && streamlit run app.py
+```
+
 
 ## Success Criteria
 
 | Level | Criteria |
 |-------|----------|
-| **Baseline** | It runs. One scenario, one full run, three findings rendered. No crashes. |
-| **Target** | It tells a story. Findings are specific, quantified, legible. Improvement vs baseline is non-trivial and explained. |
-| **Stretch** | It changes how we think. A finding surprises the team enough to spark a follow-up. |
-| **Bonus** | Left tooling behind. A PR, seed scenario, tuning notebook, or docs improvement. |
+| **Baseline** | Analysis runs without errors. At least one finding generated. |
+| **Target** | 3+ non-trivial findings per run. Findings are specific, quantified, and legible. |
+| **Stretch** | A finding reveals something genuinely unexpected about the data model or domain. |
 
 ---
 
-*This repo is the single source of truth for the two-week mission. Update PROGRESS.md daily. Log every experiment. Write findings in plain language.*
+*This repo is the single source of truth for the Forrest/HMAS project.*
