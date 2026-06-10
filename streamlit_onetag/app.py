@@ -2049,11 +2049,10 @@ st.sidebar.caption("Lockout/Tagout DB Explorer")
 
 ok, ver = check_connection()
 if ok:
-    st.sidebar.success(f"✅ Connected | {ver}")
+    st.sidebar.success(f"✅ Connected to SQL Server | {ver}")
 else:
-    st.sidebar.error(f"❌ Disconnected: {ver}")
-    st.sidebar.info("Run: `docker start sqlserver-onetag` on host")
-    st.stop()
+    st.sidebar.warning("⚠️ SQL Server unavailable — most data pages require it.")
+    st.sidebar.info("The 🚀 Forrest Findings page works with local SQLite data regardless.")
 
 page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📊 Gantt Chart", "⏱️ Job Timeframes", "🔧 Constraints", "📈 Analysis", "🚀 Forrest Findings"])
 
