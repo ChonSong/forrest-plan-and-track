@@ -1,0 +1,1592 @@
+Total tables: 103
+
+Activities:
+  'Id' (TEXT) PK NULL
+  'GroupVesselId' (TEXT) NOT NULL
+  'Number' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'Active' (INTEGER) NOT NULL
+  'ActivityStartDate' (TEXT) NOT NULL
+  'ActivityEndDate' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'groups' (TEXT) NULL
+
+AreaSystem:
+  'AreasId' (TEXT) PK NULL
+  'SystemsId' (TEXT) PK NULL
+  'areas' (TEXT) NULL
+  'systems' (TEXT) NULL
+
+AreaTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'SecureArea' (INTEGER) NOT NULL
+  'HighRisk' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+Areas:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Code' (TEXT) NOT NULL
+  'GroupId' (TEXT) NOT NULL
+  'AreaTypeId' (TEXT) NOT NULL
+  'DepartmentId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SerialisedBounds' (TEXT) NOT NULL
+  'SerialisedOrigin' (TEXT) NOT NULL
+  'ParentAreaId' (TEXT) NULL
+  'groups' (TEXT) NULL
+  'areaTypes' (TEXT) NULL
+  'departments' (TEXT) NULL
+  'areas' (TEXT) NULL
+
+AssetLogs:
+  'Id' (TEXT) PK NULL
+  'AssetTypeId' (TEXT) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'ChangeAmount' (REAL) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'assetTypes' (TEXT) NULL
+  'users' (TEXT) NULL
+
+AssetTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Flags' (REAL) NOT NULL
+  'TotalCount' (REAL) NOT NULL
+  'TotalInUse' (REAL) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+AuditCheckResource:
+  'AuditChecksId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'auditChecks' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+AuditChecks:
+  'Id' (TEXT) PK NULL
+  'AuditId' (TEXT) NOT NULL
+  'RFIIsolationId' (TEXT) NULL
+  'RFIJobId' (TEXT) NULL
+  'AuditCheckType' (INTEGER) NOT NULL
+  'DefectFound' (INTEGER) NOT NULL
+  'DefectDescription' (TEXT) NOT NULL
+  'ActionsTaken' (INTEGER) NOT NULL
+  'ActionsDescription' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'TemporaryTagId' (TEXT) NULL
+  'CheckQuestion' (TEXT) NOT NULL
+  'RFIId' (TEXT) NULL
+  'AuditCheckDate' (TEXT) NOT NULL
+  'audits' (TEXT) NULL
+  'rFIIsolations' (TEXT) NULL
+  'rFIJobs' (TEXT) NULL
+  'temporaryTags' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+
+AuditDefects:
+  'Id' (TEXT) PK NULL
+  'AuditId' (TEXT) NOT NULL
+  'IsolationPointId' (TEXT) NOT NULL
+  'DefectDescription' (TEXT) NOT NULL
+  'AuditDefectDate' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'audits' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+
+AuditLogs:
+  'Id' (TEXT) PK NULL
+  'AuditId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'AuditLogType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'PriorityExpiry' (TEXT) NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'audits' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+AuditRFIIsolationSnapshots:
+  'Id' (TEXT) PK NULL
+  'AuditId' (TEXT) NOT NULL
+  'RFIIsolationId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NOT NULL
+  'audits' (TEXT) NULL
+  'rFIIsolations' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+AuditRFIIsolations:
+  'AuditsId' (TEXT) PK NULL
+  'RFIIsolationsId' (TEXT) PK NULL
+  'audits' (TEXT) NULL
+  'rFIIsolations' (TEXT) NULL
+
+AuditRFIJobs:
+  'AuditsId' (TEXT) PK NULL
+  'RFIJobsId' (TEXT) PK NULL
+  'audits' (TEXT) NULL
+  'rFIJobs' (TEXT) NULL
+
+AuditRFIs:
+  'AuditsId' (TEXT) PK NULL
+  'RFIsId' (TEXT) PK NULL
+  'audits' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+
+AuditTemporaryTags:
+  'AuditsId' (TEXT) PK NULL
+  'TemporaryTagsId' (TEXT) PK NULL
+  'audits' (TEXT) NULL
+  'temporaryTags' (TEXT) NULL
+
+Audits:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'AuditType' (INTEGER) NOT NULL
+  'AuditState' (INTEGER) NOT NULL
+  'EventStartDate' (TEXT) NOT NULL
+  'EventEndDate' (TEXT) NOT NULL
+  'ActivityId' (TEXT) NULL
+  'ReservedUserId' (TEXT) NULL
+  'DateCompleted' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Defects' (INTEGER) NOT NULL
+  'DateApproved' (TEXT) NULL
+  'ApprovedUserId' (TEXT) NULL
+  'ApprovedUserSnapshot' (TEXT) NOT NULL
+  'ReservedUserSnapshot' (TEXT) NOT NULL
+  'DateSignOff' (TEXT) NULL
+  'SignOffUserId' (TEXT) NULL
+  'SignOffUserSnapshot' (TEXT) NOT NULL
+  'activities' (TEXT) NULL
+  'users' (TEXT) NULL
+  'users_approveduser' (TEXT) NULL
+  'users_signoffuser' (TEXT) NULL
+
+BoundaryTemplateItems:
+  'Id' (TEXT) PK NULL
+  'BoundaryTemplateId' (TEXT) NOT NULL
+  'Index' (INTEGER) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'IsolationPointId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'AppliedState' (INTEGER) NOT NULL
+  'EquipmentId' (TEXT) NULL
+  'HoldPoint' (INTEGER) NOT NULL
+  'DraftCreated' (INTEGER) NOT NULL
+  'boundaryTemplates' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+  'equipment' (TEXT) NULL
+
+BoundaryTemplateLogs:
+  'Id' (TEXT) PK NULL
+  'BoundaryTemplateId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'BoundaryTemplateLogType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'PriorityExpiry' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'boundaryTemplates' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+BoundaryTemplateRFI:
+  'BoundaryTemplatesId' (TEXT) PK NULL
+  'RFIsId' (TEXT) PK NULL
+  'boundaryTemplates' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+
+BoundaryTemplateResource:
+  'BoundaryTemplatesId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'boundaryTemplates' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+BoundaryTemplateStandardActivity:
+  'BoundaryTemplatesId' (TEXT) PK NULL
+  'StandardActivitiesId' (TEXT) PK NULL
+  'boundaryTemplates' (TEXT) NULL
+  'standardActivities' (TEXT) NULL
+
+BoundaryTemplateSystem:
+  'BoundaryTemplatesId' (TEXT) PK NULL
+  'SystemsId' (TEXT) PK NULL
+  'boundaryTemplates' (TEXT) NULL
+  'systems' (TEXT) NULL
+
+BoundaryTemplates:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'BoundaryTemplateType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Version' (TEXT) NOT NULL
+  'OnHold' (INTEGER) NOT NULL
+  'CreatorUserId' (TEXT) NOT NULL
+  'CreatorUserSnapshot' (TEXT) NOT NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'LastModifiedUserId' (TEXT) NOT NULL
+  'LastModifiedUserSnapshot' (TEXT) NOT NULL
+  'Imported' (INTEGER) NOT NULL
+  'users' (TEXT) NULL
+  'users_creatoruser' (TEXT) NULL
+  'users_lastmodifieduser' (TEXT) NULL
+
+CheckListTemplateDepartments:
+  'CheckListTemplatesId' (TEXT) PK NULL
+  'DepartmentsId' (TEXT) PK NULL
+  'checkListTemplates' (TEXT) NULL
+  'departments' (TEXT) NULL
+
+CheckListTemplateItems:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Version' (TEXT) NOT NULL
+  'Instruction' (TEXT) NOT NULL
+  'CheckListTemplateItemType' (INTEGER) NOT NULL
+  'CheckListTemplateId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'EquipmentId' (TEXT) NULL
+  'IsolationPointId' (TEXT) NULL
+  'EnergyNominalType' (INTEGER) NOT NULL
+  'EnergyNominalValue' (REAL) NOT NULL
+  'SwMATable' (INTEGER) NOT NULL
+  'TimeInMins' (INTEGER) NOT NULL
+  'Index' (INTEGER) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'checkListTemplates' (TEXT) NULL
+  'equipment' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+CheckListTemplateTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+CheckListTemplates:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Version' (TEXT) NOT NULL
+  'GroupId' (TEXT) NOT NULL
+  'CheckListTemplateTypeId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SwMANumber' (TEXT) NOT NULL
+  'groups' (TEXT) NULL
+  'checkListTemplateTypes' (TEXT) NULL
+
+Companies:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Phone' (TEXT) NOT NULL
+  'Email' (TEXT) NOT NULL
+  'ContactPerson' (TEXT) NOT NULL
+  'Address' (TEXT) NOT NULL
+  'GroupId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Code' (TEXT) NOT NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'groups' (TEXT) NULL
+
+CoordinateSystems:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'SerialisedBounds' (TEXT) NOT NULL
+  'SerialisedOrigin' (TEXT) NOT NULL
+  'Rotation' (REAL) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+DangerTag:
+  'Id' (TEXT) PK NULL
+  'TagNumber' (TEXT) NOT NULL
+  'SerialNumber' (TEXT) NOT NULL
+  'TrackingEnabled' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'PrintCount' (INTEGER) NOT NULL
+
+Departments:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'ParentDepartmentId' (TEXT) NULL
+  'departments' (TEXT) NULL
+
+Equipment:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'SerialNumber' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'AreaId' (TEXT) NOT NULL
+  'SystemId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SerialisedPosition' (TEXT) NOT NULL
+  'areas' (TEXT) NULL
+  'systems' (TEXT) NULL
+
+EquipmentIsolations:
+  'EquipmentId' (TEXT) PK NULL
+  'IsolationPointId' (TEXT) PK NULL
+  'Id' (TEXT) NOT NULL
+  'Notes' (TEXT) NOT NULL
+  'Secondary' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'equipment' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+
+EventLogTransactions:
+  'Id' (INTEGER) PK NULL
+  'EventLogId' (TEXT) NOT NULL
+
+EventLogs:
+  'Id' (TEXT) PK NULL
+  'UserId' (TEXT) NULL
+  'EventLogArea' (TEXT) NOT NULL
+  'EventLogOperations' (INTEGER) NOT NULL
+  'ObjectId' (TEXT) NOT NULL
+  'Description' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'users' (TEXT) NULL
+
+GroupTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+Groups:
+  'Id' (TEXT) PK NULL
+  'ParentId' (TEXT) NULL
+  'GroupTypeId' (TEXT) NOT NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Code' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'CoordinateSystemId' (TEXT) NULL
+  'MapId' (TEXT) NULL
+  'groups' (TEXT) NULL
+  'groupTypes' (TEXT) NULL
+  'coordinateSystems' (TEXT) NULL
+  'maps' (TEXT) NULL
+
+IsolationPointChecks:
+  'Id' (TEXT) PK NULL
+  'IsolationPointTypeId' (TEXT) NULL
+  'IsolationPointId' (TEXT) NULL
+  'Name' (TEXT) NOT NULL
+  'Mandatory' (INTEGER) NOT NULL
+  'Order' (INTEGER) NOT NULL
+  'DisplayText' (TEXT) NOT NULL
+  'BooleanType' (INTEGER) NOT NULL
+  'DefaultValue' (TEXT) NOT NULL
+  'IsolationPointStates' (INTEGER) NOT NULL
+  'MovingToStates' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'isolationPointTypes' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+
+IsolationPointIsolationPoint:
+  'IsolationPointId' (TEXT) PK NULL
+  'ParentIsolationPointId' (TEXT) PK NULL
+  'isolationPoints' (TEXT) NULL
+  'isolationPoints_parentisolationpoint' (TEXT) NULL
+
+IsolationPointLogs:
+  'Id' (TEXT) PK NULL
+  'IsolationPointId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'IsolationPointLogType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Comment' (TEXT) NOT NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'isolationPoints' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+IsolationPointResource:
+  'IsolationPointsId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'isolationPoints' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+IsolationPointTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'IsolationType' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+IsolationPoints:
+  'Id' (TEXT) PK NULL
+  'IsolationPointStatus' (INTEGER) NOT NULL
+  'Name' (TEXT) NOT NULL
+  'FLOC' (TEXT) NOT NULL
+  'TallyPlate' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'DeactiveState' (INTEGER) NOT NULL
+  'ActiveState' (INTEGER) NOT NULL
+  'CurrentState' (INTEGER) NOT NULL
+  'IsolationPointTypeId' (TEXT) NOT NULL
+  'AreaId' (TEXT) NOT NULL
+  'SubAreaId' (TEXT) NULL
+  'CriticalSystem' (INTEGER) NOT NULL
+  'HighRiskPlant' (INTEGER) NOT NULL
+  'Lockable' (INTEGER) NOT NULL
+  'PreferredPadLockTypeId' (TEXT) NULL
+  'ValidationPossible' (INTEGER) NOT NULL
+  'ValidationMethod' (TEXT) NOT NULL
+  'EnergyPotentialValue' (REAL) NOT NULL
+  'EnergyPotentialType' (INTEGER) NOT NULL
+  'EnergyPotentialSubValue' (REAL) NOT NULL
+  'EnergyPotentialSubValueType' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SerialisedPosition' (TEXT) NOT NULL
+  'SystemId' (TEXT) NULL
+  'UID' (TEXT) NOT NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'DefectReported' (INTEGER) NOT NULL
+  'Version' (TEXT) NOT NULL
+  'DefectDescription' (TEXT) NOT NULL
+  'EnergyPotential' (TEXT) NOT NULL
+  'OneTagDisplayName' (TEXT) NOT NULL
+  'SufficientIsolation' (INTEGER) NOT NULL
+  'AlternateLockoutDeviceTypeId' (TEXT) NULL
+  'PreferredLockoutDeviceTypeId' (TEXT) NULL
+  'CreatorUserId' (TEXT) NOT NULL
+  'CreatorUserSnapshot' (TEXT) NOT NULL
+  'LastModifiedUserId' (TEXT) NOT NULL
+  'LastModifiedUserSnapshot' (TEXT) NOT NULL
+  'isolationPointTypes' (TEXT) NULL
+  'areas' (TEXT) NULL
+  'areas_subarea' (TEXT) NULL
+  'padLockTypes' (TEXT) NULL
+  'systems' (TEXT) NULL
+  'lockoutDeviceTypes' (TEXT) NULL
+  'lockoutDeviceTypes_preferredlockoutdevicetype' (TEXT) NULL
+  'users' (TEXT) NULL
+  'users_lastmodifieduser' (TEXT) NULL
+
+JobLogs:
+  'Id' (TEXT) PK NULL
+  'JobId' (TEXT) NOT NULL
+  'JobLogType' (INTEGER) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'jobs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+JobResource:
+  'JobsId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'jobs' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+JobWorkPermitType:
+  'JobId' (TEXT) PK NULL
+  'WorkPermitTypeId' (TEXT) PK NULL
+  'jobs' (TEXT) NULL
+  'workPermitTypes' (TEXT) NULL
+
+Jobs:
+  'Id' (TEXT) PK NULL
+  'CompanyId' (TEXT) NULL
+  'JobNumber' (TEXT) NULL
+  'NoteNumber' (TEXT) NULL
+  'Description' (TEXT) NULL
+  'ReasonCodeId' (TEXT) NULL
+  'SystemId' (TEXT) NULL
+  'StandardActivityId' (TEXT) NULL
+  'PlannedStartDate' (TEXT) NULL
+  'PlannedEndDate' (TEXT) NULL
+  'InternalTask' (INTEGER) NOT NULL
+  'JobState' (INTEGER) NOT NULL
+  'SetToWorkRequired' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'ActivityId' (TEXT) NULL
+  'GroupId' (TEXT) NULL
+  'DepartmentId' (TEXT) NULL
+  'ControlledJob' (INTEGER) NOT NULL
+  'OnHold' (INTEGER) NOT NULL
+  'companies' (TEXT) NULL
+  'reasonCodes' (TEXT) NULL
+  'systems' (TEXT) NULL
+  'standardActivities' (TEXT) NULL
+  'activities' (TEXT) NULL
+  'groups' (TEXT) NULL
+  'departments' (TEXT) NULL
+
+Lockboxes:
+  'Id' (TEXT) PK NULL
+  'SerialNumber' (TEXT) NOT NULL
+  'RFIId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+
+LockoutDeviceTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Colour' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'TotalCount' (REAL) NOT NULL
+  'TotalInUse' (REAL) NOT NULL
+
+LockoutDevices:
+  'Id' (TEXT) PK NULL
+  'SerialNumber' (TEXT) NOT NULL
+  'LockoutDeviceTypeId' (TEXT) NOT NULL
+  'UserId' (TEXT) NULL
+  'TrackingEnabled' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'lockoutDeviceTypes' (TEXT) NULL
+  'users' (TEXT) NULL
+
+Maps:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NOT NULL
+  'SerialisedOrigin' (TEXT) NOT NULL
+  'SerialisedScale' (TEXT) NOT NULL
+  'SerialisedBounds' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+MessageTemplates:
+  'Id' (TEXT) PK NULL
+  'MessageNote' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+Messages:
+  'Id' (TEXT) PK NULL
+  'UserId' (TEXT) NULL
+  'SenderUserId' (TEXT) NULL
+  'SourceMessageId' (TEXT) NULL
+  'MessageNote' (TEXT) NULL
+  'AssociatedTableId' (TEXT) NULL
+  'AssociatedTable' (INTEGER) NOT NULL
+  'MessageType' (INTEGER) NOT NULL
+  'MessageStatus' (INTEGER) NOT NULL
+  'BroadcastStart' (TEXT) NULL
+  'BroadcastEnd' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'users' (TEXT) NULL
+  'users_senderuser' (TEXT) NULL
+  'messages' (TEXT) NULL
+
+PadLockTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Colour' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'PersonalLock' (INTEGER) NOT NULL
+  'VerificationLock' (INTEGER) NOT NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+
+PadLocks:
+  'Id' (TEXT) PK NULL
+  'SerialNumber' (TEXT) NOT NULL
+  'PadLockTypeId' (TEXT) NOT NULL
+  'UserId' (TEXT) NULL
+  'TrackingEnabled' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Active' (INTEGER) NOT NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'padLockTypes' (TEXT) NULL
+  'users' (TEXT) NULL
+
+PermissionGroups:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'IsSystem' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SortOrder' (INTEGER) NOT NULL
+
+Permissions:
+  'Id' (TEXT) PK NULL
+  'Key' (TEXT) NOT NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'IsActive' (INTEGER) NOT NULL
+  'PermissionGroupId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SortOrder' (INTEGER) NOT NULL
+  'permissionGroups' (TEXT) NULL
+
+RFIAreas:
+  'AreasId' (TEXT) PK NULL
+  'RFIsId' (TEXT) PK NULL
+  'areas' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+
+RFIIsolationResource:
+  'IsolationsId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'rFIIsolations' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+RFIIsolations:
+  'Id' (TEXT) PK NULL
+  'RFIId' (TEXT) NOT NULL
+  'IsolationPointId' (TEXT) NULL
+  'DangerTagId' (TEXT) NULL
+  'PadLockId' (TEXT) NULL
+  'LockOutDeviceId' (TEXT) NULL
+  'EquipmentId' (TEXT) NULL
+  'RFIIsolationState' (INTEGER) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'AppliedState' (INTEGER) NOT NULL
+  'AppliedUserId' (TEXT) NULL
+  'AppliedSignatureId' (TEXT) NULL
+  'AppliedDate' (TEXT) NOT NULL
+  'RemovalState' (INTEGER) NOT NULL
+  'RemovalUserId' (TEXT) NULL
+  'RemovalSignatureId' (TEXT) NULL
+  'RemovalDate' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'HighRisk' (INTEGER) NOT NULL
+  'HoldPoint' (INTEGER) NOT NULL
+  'Index' (INTEGER) NOT NULL
+  'Printed' (INTEGER) NOT NULL
+  'PrintedUserId' (TEXT) NULL
+  'ReservedUserId' (TEXT) NULL
+  'LockOutDeviceTypeId' (TEXT) NULL
+  'RFILockBoxId' (TEXT) NULL
+  'LastAuditId' (TEXT) NULL
+  'AppliedUserSnapshot' (TEXT) NOT NULL
+  'PrintedUserSnapshot' (TEXT) NOT NULL
+  'RemovalUserSnapshot' (TEXT) NOT NULL
+  'ReservedUserSnapshot' (TEXT) NOT NULL
+  'rFIs' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+  'dangerTag' (TEXT) NULL
+  'padLocks' (TEXT) NULL
+  'lockoutDevices' (TEXT) NULL
+  'equipment' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+  'users_removaluser' (TEXT) NULL
+  'resources_removalsignature' (TEXT) NULL
+  'users_printeduser' (TEXT) NULL
+  'users_reserveduser' (TEXT) NULL
+  'lockoutDeviceTypes' (TEXT) NULL
+  'rFILockBoxes' (TEXT) NULL
+  'audits' (TEXT) NULL
+
+RFIJobs:
+  'Id' (TEXT) PK NULL
+  'RFIId' (TEXT) NOT NULL
+  'JobId' (TEXT) NOT NULL
+  'LinkingUserId' (TEXT) NULL
+  'LinkingSignatureId' (TEXT) NULL
+  'LinkingDate' (TEXT) NOT NULL
+  'DeLinkingUserId' (TEXT) NULL
+  'DeLinkingSignatureId' (TEXT) NULL
+  'DeLinkingDate' (TEXT) NOT NULL
+  'SetToWorkDate' (TEXT) NOT NULL
+  'SetToWorkCompleteSignatureId' (TEXT) NULL
+  'SetToWorkCompleteDate' (TEXT) NOT NULL
+  'WorkCompleteDate' (TEXT) NOT NULL
+  'WorkCompleteSignatureId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'PercentageComplete' (INTEGER) NOT NULL
+  'DeLinkingUserSnapshot' (TEXT) NOT NULL
+  'LinkingUserSnapshot' (TEXT) NOT NULL
+  'RFIJobState' (INTEGER) NOT NULL
+  'rFIs' (TEXT) NULL
+  'jobs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+  'users_delinkinguser' (TEXT) NULL
+  'resources_delinkingsignature' (TEXT) NULL
+  'resources_settoworkcompletesignature' (TEXT) NULL
+  'resources_workcompletesignature' (TEXT) NULL
+
+RFILockBoxes:
+  'Id' (TEXT) PK NULL
+  'RFIId' (TEXT) NOT NULL
+  'SerialNumber' (TEXT) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'PadLockId' (TEXT) NOT NULL
+  'LockBoxAreaId' (TEXT) NOT NULL
+  'PadLockAreaId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'LockboxId' (TEXT) NOT NULL
+  'VerificationLockId' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'padLocks' (TEXT) NULL
+  'areas' (TEXT) NULL
+  'areas_padlockarea' (TEXT) NULL
+  'lockboxes' (TEXT) NULL
+  'padLocks_verificationlock' (TEXT) NULL
+
+RFILockResource:
+  'RFILocksId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'rFILocks' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+RFILocks:
+  'Id' (TEXT) PK NULL
+  'RFIId' (TEXT) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'PadLockId' (TEXT) NOT NULL
+  'RFILockState' (INTEGER) NOT NULL
+  'LockOnSignatureId' (TEXT) NULL
+  'LockOnDate' (TEXT) NOT NULL
+  'LockOffSignatureId' (TEXT) NULL
+  'LockOffDate' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'LockOnComment' (TEXT) NOT NULL
+  'LockOffComment' (TEXT) NOT NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'rFIs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'padLocks' (TEXT) NULL
+  'resources' (TEXT) NULL
+  'resources_lockoffsignature' (TEXT) NULL
+
+RFILocksRFIJobs:
+  'Id' (TEXT) PK NULL
+  'RFILockId' (TEXT) NOT NULL
+  'RFIJobId' (TEXT) NOT NULL
+  'RFILockState' (INTEGER) NOT NULL
+  'LockOnSignatureId' (TEXT) NULL
+  'LockOnDate' (TEXT) NOT NULL
+  'LockOnComment' (TEXT) NOT NULL
+  'LockOffSignatureId' (TEXT) NULL
+  'LockOffDate' (TEXT) NOT NULL
+  'LockOffComment' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'PercentageComplete' (INTEGER) NOT NULL
+  'rFILocks' (TEXT) NULL
+  'rFIJobs' (TEXT) NULL
+  'resources' (TEXT) NULL
+  'resources_lockoffsignature' (TEXT) NULL
+
+RFILogs:
+  'Id' (TEXT) PK NULL
+  'RFIId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'RFILogType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'PriorityExpiry' (TEXT) NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'rFIs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+RFIResource:
+  'RFIsId' (TEXT) PK NULL
+  'ResourcesId' (TEXT) PK NULL
+  'rFIs' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+RFISystem:
+  'RFIsId' (TEXT) PK NULL
+  'SystemsId' (TEXT) PK NULL
+  'rFIs' (TEXT) NULL
+  'systems' (TEXT) NULL
+
+RFIs:
+  'Id' (TEXT) PK NULL
+  'Description' (TEXT) NOT NULL
+  'RFINumber' (TEXT) NOT NULL
+  'RFIState' (INTEGER) NOT NULL
+  'GroupId' (TEXT) NULL
+  'DeveloperUserId' (TEXT) NOT NULL
+  'IsolationUserId' (TEXT) NULL
+  'RFILockBoxId' (TEXT) NULL
+  'ReservedUserId' (TEXT) NULL
+  'ExpectedStartDate' (TEXT) NOT NULL
+  'ExpectedEndDate' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'AlteredState' (INTEGER) NOT NULL
+  'Immediate' (INTEGER) NOT NULL
+  'LockedUserId' (TEXT) NULL
+  'ActivityId' (TEXT) NULL
+  'Simple' (INTEGER) NOT NULL
+  'RequestedUserId' (TEXT) NULL
+  'DeveloperUserSnapshot' (TEXT) NOT NULL
+  'IsolationUserSnapshot' (TEXT) NOT NULL
+  'LockedUserSnapshot' (TEXT) NOT NULL
+  'RequestedUserSnapshot' (TEXT) NOT NULL
+  'ReservedUserSnapshot' (TEXT) NOT NULL
+  'VerificationRequired' (INTEGER) NOT NULL
+  'CreatorUserId' (TEXT) NOT NULL
+  'CreatorUserSnapshot' (TEXT) NOT NULL
+  'groups' (TEXT) NULL
+  'users' (TEXT) NULL
+  'users_isolationuser' (TEXT) NULL
+  'users_reserveduser' (TEXT) NULL
+  'users_lockeduser' (TEXT) NULL
+  'activities' (TEXT) NULL
+  'users_requesteduser' (TEXT) NULL
+  'users_creatoruser' (TEXT) NULL
+
+ReasonCodes:
+  'Id' (TEXT) PK NULL
+  'Code' (TEXT) NOT NULL
+  'Name' (TEXT) NOT NULL
+  'Internal' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+ResourceSwMA:
+  'ResourcesId' (TEXT) PK NULL
+  'SwMAsId' (TEXT) PK NULL
+  'resources' (TEXT) NULL
+  'swMAs' (TEXT) NULL
+
+ResourceSwMACheck:
+  'ResourcesId' (TEXT) PK NULL
+  'SwMAChecksId' (TEXT) PK NULL
+  'resources' (TEXT) NULL
+  'swMAChecks' (TEXT) NULL
+
+ResourceWorkPermit:
+  'ResourcesId' (TEXT) PK NULL
+  'WorkPermitsId' (TEXT) PK NULL
+  'resources' (TEXT) NULL
+  'workPermits' (TEXT) NULL
+
+Resources:
+  'Id' (TEXT) PK NULL
+  'ResourceType' (INTEGER) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'ResourceData' (BLOB) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'MediaType' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'ResourceAllocation' (INTEGER) NULL
+  'ResourcePath' (TEXT) NOT NULL
+  'FileExtension' (TEXT) NOT NULL
+
+StandardActivities:
+  'Id' (TEXT) PK NULL
+  'StandardActivityNumber' (TEXT) NOT NULL
+  'DocumentNumber' (TEXT) NOT NULL
+  'SetToWorkRequired' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Description' (TEXT) NOT NULL
+  'FacilityCode' (TEXT) NOT NULL
+  'RevisionDate' (TEXT) NOT NULL
+  'RevisionNumber' (TEXT) NOT NULL
+
+StandardActivityItems:
+  'Id' (TEXT) PK NULL
+  'StandardActivityId' (TEXT) NOT NULL
+  'Index' (INTEGER) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'StandardActivityItemType' (INTEGER) NOT NULL
+  'IsolationPointId' (TEXT) NULL
+  'EquipmentId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'standardActivities' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+  'equipment' (TEXT) NULL
+
+StandardActivitySystem:
+  'StandardActivitesId' (TEXT) PK NULL
+  'SystemsId' (TEXT) PK NULL
+  'standardActivities' (TEXT) NULL
+  'systems' (TEXT) NULL
+
+SwMAChecks:
+  'Id' (TEXT) PK NULL
+  'SwMAId' (TEXT) NOT NULL
+  'CheckListTemplateItemId' (TEXT) NOT NULL
+  'Index' (INTEGER) NOT NULL
+  'SwMACheckType' (INTEGER) NOT NULL
+  'AssessorId' (TEXT) NOT NULL
+  'Note' (TEXT) NOT NULL
+  'EnergyRecordedValue' (REAL) NOT NULL
+  'EnergyRecordedType' (INTEGER) NOT NULL
+  'DefectFound' (INTEGER) NOT NULL
+  'DefectDescription' (TEXT) NOT NULL
+  'CheckListTemplateItemError' (INTEGER) NOT NULL
+  'CheckListTemplateItemDesc' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Completed' (TEXT) NULL
+  'swMAs' (TEXT) NULL
+  'checkListTemplateItems' (TEXT) NULL
+  'users' (TEXT) NULL
+
+SwMAJobsAdditionalDefects:
+  'AdditionalDefectsId' (TEXT) PK NULL
+  'SwMAAdditionalDefectsId' (TEXT) PK NULL
+  'jobs' (TEXT) NULL
+  'swMAs' (TEXT) NULL
+
+SwMAJobsPreExistingDefects:
+  'PreExistingDefectsId' (TEXT) PK NULL
+  'SwMAExistingDefectsId' (TEXT) PK NULL
+  'jobs' (TEXT) NULL
+  'swMAs' (TEXT) NULL
+
+SwMALogs:
+  'Id' (TEXT) PK NULL
+  'SwMAId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'SwMALogType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'DateTimeCompleted' (TEXT) NOT NULL
+  'DateTimeStarted' (TEXT) NOT NULL
+  'swMAs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+SwMARegisters:
+  'Id' (TEXT) PK NULL
+  'GroupClassId' (TEXT) NOT NULL
+  'GroupVesselId' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'EventStartDate' (TEXT) NOT NULL
+  'EventEndDate' (TEXT) NOT NULL
+  'SwMACoordinatorId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Active' (INTEGER) NOT NULL
+  'groups' (TEXT) NULL
+  'groups_groupvessel' (TEXT) NULL
+  'users' (TEXT) NULL
+
+SwMASAssessors:
+  'AssessorsId' (TEXT) PK NULL
+  'SwMASId' (TEXT) PK NULL
+  'users' (TEXT) NULL
+  'swMAs' (TEXT) NULL
+
+SwMATemplateDepartments:
+  'DepartmentsId' (TEXT) PK NULL
+  'SwMATemplatesId' (TEXT) PK NULL
+  'departments' (TEXT) NULL
+  'swMATemplates' (TEXT) NULL
+
+SwMATemplateItems:
+  'Id' (TEXT) PK NULL
+  'Index' (INTEGER) NOT NULL
+  'SwMATemplateId' (TEXT) NOT NULL
+  'CheckListTemplateItemId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'swMATemplates' (TEXT) NULL
+  'checkListTemplateItems' (TEXT) NULL
+
+SwMATemplates:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Version' (TEXT) NOT NULL
+  'SwMATemplateType' (INTEGER) NOT NULL
+  'AreaId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SystemId' (TEXT) NULL
+  'SwMANumber' (TEXT) NOT NULL
+  'GroupId' (TEXT) NOT NULL
+  'areas' (TEXT) NULL
+  'systems' (TEXT) NULL
+  'groups' (TEXT) NULL
+
+SwMAs:
+  'Id' (TEXT) PK NULL
+  'SwMARegisterId' (TEXT) NOT NULL
+  'SwMATemplateId' (TEXT) NOT NULL
+  'SwMAEventTrigger' (INTEGER) NOT NULL
+  'SwMANumber' (TEXT) NOT NULL
+  'SwMAState' (INTEGER) NOT NULL
+  'Defects' (INTEGER) NOT NULL
+  'HRAStatus' (INTEGER) NOT NULL
+  'SwMACoordinatorId' (TEXT) NULL
+  'SupervisorId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'DepartmentId' (TEXT) NOT NULL
+  'ReservedUserId' (TEXT) NULL
+  'ActualTotalMins' (INTEGER) NOT NULL
+  'QuotedTotalMins' (INTEGER) NOT NULL
+  'CompletedDate' (TEXT) NULL
+  'DeferredDate' (TEXT) NULL
+  'swMARegisters' (TEXT) NULL
+  'swMATemplates' (TEXT) NULL
+  'users' (TEXT) NULL
+  'users_supervisor' (TEXT) NULL
+  'departments' (TEXT) NULL
+  'users_reserveduser' (TEXT) NULL
+
+SystemCategories:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Colour' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+SystemTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Colour' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+SystemTypesDepartments:
+  'DepartmentsId' (TEXT) PK NULL
+  'SystemTypesId' (TEXT) PK NULL
+  'departments' (TEXT) NULL
+  'systemTypes' (TEXT) NULL
+
+Systems:
+  'Id' (TEXT) PK NULL
+  'ParentId' (TEXT) NULL
+  'Name' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Code' (TEXT) NOT NULL
+  'SystemTypeId' (TEXT) NOT NULL
+  'SystemCategoryId' (TEXT) NOT NULL
+  'DepartmentId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'systems' (TEXT) NULL
+  'systemTypes' (TEXT) NULL
+  'systemCategories' (TEXT) NULL
+  'departments' (TEXT) NULL
+
+TemporaryTagLogs:
+  'Id' (TEXT) PK NULL
+  'TemporaryTagId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'TemporaryTagLogType' (INTEGER) NOT NULL
+  'UserId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'temporaryTags' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+TemporaryTags:
+  'Id' (TEXT) PK NULL
+  'RFIId' (TEXT) NULL
+  'IsolationPointId' (TEXT) NULL
+  'EquipmentId' (TEXT) NULL
+  'TemporaryTagState' (INTEGER) NOT NULL
+  'Notes' (TEXT) NOT NULL
+  'TemporaryTagNumber' (TEXT) NOT NULL
+  'AppliedUserId' (TEXT) NULL
+  'AppliedSignatureId' (TEXT) NULL
+  'AppliedDate' (TEXT) NOT NULL
+  'RemovalUserId' (TEXT) NULL
+  'RemovalSignatureId' (TEXT) NULL
+  'RemovalDate' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'AppliedState' (INTEGER) NOT NULL
+  'AppliedUserSnapshot' (TEXT) NOT NULL
+  'RemovalUserSnapshot' (TEXT) NOT NULL
+  'rFIs' (TEXT) NULL
+  'isolationPoints' (TEXT) NULL
+  'equipment' (TEXT) NULL
+  'users' (TEXT) NULL
+  'resources' (TEXT) NULL
+  'users_removaluser' (TEXT) NULL
+  'resources_removalsignature' (TEXT) NULL
+
+UserLoginHistory:
+  'Id' (TEXT) PK NULL
+  'UserId' (TEXT) NOT NULL
+  'LoginTime' (TEXT) NOT NULL
+  'LogoutTime' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'SessionId' (TEXT) NOT NULL
+  'users' (TEXT) NULL
+
+UserLogins:
+  'Id' (TEXT) PK NULL
+  'LastLogin' (TEXT) NOT NULL
+  'LastPasswordChange' (TEXT) NOT NULL
+  'PasswordSalt' (BLOB) NOT NULL
+  'PasswordHash' (BLOB) NOT NULL
+  'LastPasswordSalt' (BLOB) NULL
+  'LastPasswordHash' (BLOB) NULL
+  'UserLoginStates' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+
+UserLogs:
+  'Id' (TEXT) PK NULL
+  'UserId' (TEXT) NOT NULL
+  'Description' (TEXT) NOT NULL
+  'Comment' (TEXT) NOT NULL
+  'UserLogType' (INTEGER) NOT NULL
+  'LogAuthorUserId' (TEXT) NOT NULL
+  'ResourceId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'LogAuthorUserSnapshot' (TEXT) NOT NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'users' (TEXT) NULL
+  'users_logauthoruser' (TEXT) NULL
+  'resources' (TEXT) NULL
+
+UserPermissions:
+  'UserId' (TEXT) PK NULL
+  'PermissionId' (TEXT) PK NULL
+  'Override' (INTEGER) NOT NULL
+  'users' (TEXT) NULL
+  'permissions' (TEXT) NULL
+
+UserRolePermissions:
+  'UserRoleId' (TEXT) PK NULL
+  'PermissionId' (TEXT) PK NULL
+  'userRoles' (TEXT) NULL
+  'permissions' (TEXT) NULL
+
+UserRoles:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'Permissions' (REAL) NOT NULL
+  'RoleLevel' (INTEGER) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'ReadOnly' (INTEGER) NOT NULL
+
+Users:
+  'Id' (TEXT) PK NULL
+  'FirstName' (TEXT) NOT NULL
+  'LastName' (TEXT) NOT NULL
+  'UserName' (TEXT) NOT NULL
+  'Mobile' (TEXT) NOT NULL
+  'Email' (TEXT) NOT NULL
+  'Address' (TEXT) NOT NULL
+  'BadgeSerialNumber' (TEXT) NOT NULL
+  'Position' (TEXT) NOT NULL
+  'Permissions' (REAL) NOT NULL
+  'GroupId' (TEXT) NULL
+  'UserRoleId' (TEXT) NOT NULL
+  'DepartmentId' (TEXT) NULL
+  'UserLoginId' (TEXT) NULL
+  'CompanyId' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Competencies' (REAL) NOT NULL
+  'ProfileImage' (BLOB) NULL
+  'Signature' (BLOB) NULL
+  'DeactivatedBy' (TEXT) NULL
+  'DeactivatedDate' (TEXT) NULL
+  'AccountLocked' (INTEGER) NOT NULL
+  'AccountLockedDate' (TEXT) NULL
+  'LoginAttempts' (INTEGER) NOT NULL
+  'groups' (TEXT) NULL
+  'userRoles' (TEXT) NULL
+  'departments' (TEXT) NULL
+  'userLogins' (TEXT) NULL
+  'companies' (TEXT) NULL
+
+WorkPermitTypes:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'Prefix' (TEXT) NOT NULL
+
+WorkPermits:
+  'Id' (TEXT) PK NULL
+  'WorkPermitTypeId' (TEXT) NOT NULL
+  'RFIId' (TEXT) NULL
+  'JobId' (TEXT) NULL
+  'UserId' (TEXT) NULL
+  'Description' (TEXT) NOT NULL
+  'AcknowledgedBySignatureId' (TEXT) NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL
+  'UserSnapshot' (TEXT) NOT NULL
+  'AcknowledgedById' (TEXT) NULL
+  'AcknowledgedBySnapshot' (TEXT) NULL
+  'AcknowledgedDate' (TEXT) NULL
+  'AcknowledgedComment' (TEXT) NULL
+  'ClosureUserId' (TEXT) NULL
+  'ClosureComment' (TEXT) NULL
+  'ClosureDate' (TEXT) NULL
+  'ClosureSignatureId' (TEXT) NULL
+  'ClosureUserSnapshot' (TEXT) NULL
+  'State' (INTEGER) NOT NULL
+  'workPermitTypes' (TEXT) NULL
+  'rFIs' (TEXT) NULL
+  'jobs' (TEXT) NULL
+  'users' (TEXT) NULL
+  'users_acknowledgedby' (TEXT) NULL
+  'users_closureuser' (TEXT) NULL
+
+Zones:
+  'Id' (TEXT) PK NULL
+  'Name' (TEXT) NOT NULL
+  'ZoneType' (INTEGER) NOT NULL
+  'SerialisedBounds' (TEXT) NOT NULL
+  'CreatedDate' (TEXT) NOT NULL
+  'ModifiedDate' (TEXT) NULL
+  'DeletedDate' (TEXT) NULL
+  'CreatedBy' (TEXT) NOT NULL
+  'ModifiedBy' (TEXT) NULL
+  'DeletedBy' (TEXT) NULL

@@ -1,118 +1,115 @@
-# Mental Model of Forrest
+# Forrest — Data Analysis Engine
 
 > Read this before touching any code. This is the product.
 
 ## What Forrest Is
 
-Forrest is a **long-running autonomous loop** over a user-described scenario. Each iteration is one experiment. The loop runs 200 times (paid) or 50 times (free), and at the end, three plain-language findings are extracted.
+Forrest is a **structured data analysis engine** that runs analysis passes over the OneTag HMAS database, scores each finding by anomaly severity or statistical significance, and surfaces the top findings in plain language.
+
+Each "experiment" is one analysis pass. The loop runs N passes, and at the end, the top findings are extracted for the dashboard to display.
+
+No LLM API keys needed. No external services. Everything runs locally on the seeded SQLite database.
 
 ## The Loop
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                                                         │
-│   ┌──────────┐    ┌──────────┐    ┌──────────┐         │
-│   │ PROPOSE  │───▶│ SIMULATE │───▶│  SCORE   │         │
-│   │          │    │          │    │          │         │
-│   │ Claude   │    │ 500 MC   │    │ Aggregate│         │
-│   │ reads    │    │ sims per │    │ stats →  │         │
-│   │ current  │    │ expt     │    │ score    │         │
-│   │ best &   │    │          │    │          │         │
-│   │ proposes │    │          │    │          │         │
-│   │ mutation │    │          │    │          │         │
-│   └──────────┘    └──────────┘    └────┬─────┘         │
-│                                        │                │
-│                                        ▼                │
-│                               ┌──────────────┐         │
-│                               │ COMMIT OR    │         │
-│                               │ DISCARD      │         │
-│                               │              │         │
-│                               │ Score beats  │         │
-│                               │ current best │         │
-│                               │ → new        │         │
-│                               │ baseline     │         │
-│                               │              │         │
-│                               │ Otherwise →  │         │
-│                               │ discard but  │         │
-│                               │ keep lineage │         │
-│                               └──────┬───────┘         │
-│                                      │                  │
-│                                      ▼                  │
-│                               ┌──────────────┐         │
-│                               │   REPEAT     │         │
-│                               │   200 times  │         │
-│                               └──────────────┘         │
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│   ┌──────────┐    ┌───────────┐    ┌──────────┐         │
+│   │  QUERY   │───▶│  ANALYZE  │───▶│   RANK   │         │
+│   │          │    │           │    │          │         │
+│   │ SQL /    │    │ pandas /  │    │ Score by │         │
+│   │ pandas   │    │ stats     │    │ anomaly  │         │
+│   │ fetch    │    │ compute   │    │ severity │         │
+│   │ data     │    │ metric    │    │          │         │
+│   └──────────┘    └───────────┘    └────┬─────┘         │
+│                                         │               │
+│                                         ▼               │
+│                                ┌──────────────┐        │
+│                                │  FINDING OR   │        │
+│                                │  DISCARD      │        │
+│                                │              │        │
+│                                │ Metric beats │        │
+│                                │ threshold →  │        │
+│                                │ log finding  │        │
+│                                │              │        │
+│                                │ Otherwise →  │        │
+│                                │ keep for     │        │
+│                                │ context      │        │
+│                                └──────┬───────┘        │
+│                                       │                 │
+│                                       ▼                 │
+│                                ┌──────────────┐        │
+│                                │   REPEAT     │        │
+│                                │  N analysis  │        │
+│                                │   passes     │        │
+│                                └──────────────┘        │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
+```
+
+## Analysis Pass Categories
+
+| Category | What It Looks For | Example Finding |
+|----------|------------------|-----------------|
+| **Anomalies** | Orphaned FK values, date logic errors, missing data | "15 RFIs have isolation points applied before the RFI was created" |
+| **Patterns** | Usage trends, peak periods, most common actions | "Valve PV-101 is the most-isolated point: 23 RFIs in 6 months" |
+| **Relationships** | Cross-entity correlations | "High-risk areas have 3x more audit defects than standard areas" |
+| **Statistics** | Distributions, percentiles, outlier detection | "95th percentile lock duration is 8h — 3 outliers exceed 24h" |
+
+## Finding Format
+
+Each finding is a structured object:
+
+```
+{
+  title: "string — one-line summary",
+  description: "string — 2-3 sentence plain-language explanation",
+  score: float — 0.0 to 1.0 (anomaly severity / significance),
+  category: "anomaly" | "pattern" | "relationship" | "statistic",
+  query: "SQL that produced this finding",
+  affected_tables: ["table1", "table2"],
+  evidence: "chart title or metric value"
+}
 ```
 
 ## The Four Entities
 
 | Entity | What It Is | You'll Touch It When... |
 |--------|-----------|------------------------|
-| **Scenario** | The user's problem: description, mutation space, objective | Authoring a new demo |
-| **Run** | One execution of the loop. Holds baseline + best score | Kicking off / monitoring runs |
-| **Experiment** | One iteration. Hypothesis, mutation JSON, score, accepted? | Debugging why a run drifted |
-| **Finding** | One of the top three plain-language insights at the end | Reviewing report output |
+| **Scenario** | The OneTag HMAS domain — the database schema + domain context | Understanding the data model |
+| **Run** | One execution of all analysis passes | Kicking off / monitoring analysis |
+| **Experiment** | One analysis pass. Query, metric, score | Debugging why a pass returned weak findings |
+| **Finding** | One of the top N surfaced insights | Reviewing dashboard output |
 
-## Data Model (Prisma)
+## Scoring Model
 
-```
-┌──────────────┐       ┌──────────────┐
-│   Scenario   │       │     Run      │
-│──────────────│       │──────────────│
-│ id           │──1:N──│ id           │
-│ description  │       │ scenarioId   │
-│ mutationSpace│       │ baseline     │
-│ objective    │       │ bestScore    │
-│ createdAt    │       │ status       │
-└──────────────┘       │ maxExperiments│
-                       └──────┬───────┘
-                              │
-                              │ 1:N
-                              ▼
-                       ┌──────────────┐       ┌──────────────┐
-                       │  Experiment  │       │   Finding    │
-                       │──────────────│       │──────────────│
-                       │ id           │       │ id           │
-                       │ runId        │       │ runId        │
-                       │ hypothesis   │       │ content      │
-                       │ mutation     │       │ rank         │
-                       │ score        │       │ lineageRef   │
-                       │ accepted     │       └──────────────┘
-                       │ iteration    │
-                       └──────────────┘
-```
+Findings are scored on three dimensions:
+
+1. **Severity (0-1):** How anomalous or impactful is this? (Borken FK = 0.9, minor trend = 0.2)
+2. **Specificity (0-1):** How precise is the evidence? ("Valve PV-101" = 0.9, "Some valves" = 0.3)
+3. **Surprise (0-1):** Would a human expect this? (Unexpected correlation = 0.8, obvious = 0.1)
+
+**Final score = 0.5 × Severity + 0.3 × Specificity + 0.2 × Surprise**
+
+Passes whose score exceeds the threshold (0.4) graduate to findings.
 
 ## Key Files
 
-| File | What It Does | Read When |
-|------|-------------|-----------|
-| `prisma/schema.prisma` | 4 models: Scenario, Run, Experiment, Finding | Day 1 — data model |
-| `src/lib/engine.ts` | **THE Loop.** Propose → Simulate → Score → Commit | Day 1 — read twice |
-| `src/lib/actions.ts` | Server actions: createScenario, structure, launch | Day 2 |
-| `src/lib/db.ts` | Prisma client singleton | Day 2 |
-| `src/app/scenarios/new/page.tsx` | Create flow | Day 1 |
-| `src/app/scenarios/[id]/setup/page.tsx` | AI-assisted structuring | Day 1 |
-| `src/app/scenarios/[id]/confirm/page.tsx` | Pre-launch review | Day 2 |
-| `src/app/scenarios/[id]/run/page.tsx` | Live dashboard | Day 1 |
-| `src/app/scenarios/[id]/report/page.tsx` | Findings + lineage | Day 1 |
-| `AGENTS.md` | Next.js 16 deltas. **Mandatory read.** | Day 1 — first thing |
-
-## Engine Quirks (Known Before You Hit Them)
-
-1. **The loop runs server-side.** Closing the browser tab does NOT stop a run. Use the pause control on the dashboard.
-2. **Stuck runs:** If a run gets stuck in "running" after a crash, mark it failed directly in Prisma Studio. Don't retry — duplicate active runs make the dashboard misbehave.
-3. **Findings are AI-generated.** If they read generic, the cause is almost always the input experiments, not the finding-extraction prompt.
-4. **Forrest minimizes by default.** Make sure your objective is signed correctly.
-5. **Soft constraints introduce noise.** Convert anything you really care about to a hard constraint.
-
-## Next.js 16 Heads Up
-
-This is not the Next.js you may know. APIs, conventions, and defaults have moved. Don't trust pattern-matching from older Next projects. Check `AGENTS.md` when something looks off, and ask before reaching for a workaround.
+| File | What It Does | 
+|------|-------------|
+| `prisma/schema.prisma` | Complete OneTag data model (80+ tables) |
+| `data/onetag.db` | SQLite database with seeded sample data |
+| `engine/passes/anomalies.py` | Anomaly detection passes |
+| `engine/passes/patterns.py` | Pattern recognition passes |
+| `engine/passes/relations.py` | Cross-entity correlation passes |
+| `engine/passes/stats.py` | Statistical analysis passes |
+| `engine/runner.py` | Main loop: run all passes, collect findings |
+| `engine/scoring.py` | Score each finding on severity, specificity, surprise |
+| `streamlit_onetag/app.py` | Dashboard — findings + data exploration |
 
 ## The Product Story
 
-> Your plan runs once. Forrest runs it 10,000 times.
+> One command runs all analysis. N passes run, 3 findings emerge.
 
-The value proposition: you describe a problem once, and Forrest autonomously explores the space through Monte Carlo simulation, finding non-obvious optimizations that a human would take weeks to discover. The three findings at the end are the distilled insight — plain language, actionable, surprising.
+The value proposition: you describe the database schema once, and Forrest autonomously explores the data through structured analysis passes, finding non-obvious patterns and anomalies that a human would take days to discover manually. The top findings are surfaced in the dashboard — plain language, actionable, surprising.

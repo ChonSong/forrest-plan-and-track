@@ -1,125 +1,105 @@
-# Demo Scenario: Critical Path Under Uncertainty
+# Scenario: OneTag HMAS Sydney
 
-> Project scheduling — the most legible, stochastic, surprising domain for an intern demo.
+> **HMAS** — Health, Safety, Environmental, Asset Management system for industrial safety.
 
 ## One-Sentence Problem
 
-**A 12-task project has uncertain durations — which task's uncertainty matters most for on-time delivery?**
+**A complex industrial safety system (80+ tables, 248 relationships) tracks isolations, permits, audits, and work orders — which patterns and anomalies in this data reveal hidden safety risks or operational inefficiencies?**
 
 ## Why This Scenario
 
 | Trait | Assessment |
 |-------|-----------|
-| **Legible** | ✅ Every PM, engineer, and stakeholder understands "some tasks take longer than expected." One sentence, no jargon. |
-| **Stochastic** | ✅ Task durations are inherently uncertain. Monte Carlo simulation is the natural tool — not a forced fit. |
-| **Surprising** | ✅ Forrest may find that the critical path isn't what the Gantt chart says, or that adding resources to the "obvious" bottleneck doesn't help, or that one specific task's variance dominates all others. |
-| **Safe** | ✅ Fully synthetic data. No NDA, no customer data, no external feeds. |
+| **Real** | ✅ Derived from a 2.5GB production SQL Server backup. Real schema, realistic data. |
+| **Rich** | ✅ 80+ tables covering isolations, RFIs, work permits, audits, lockout/tagout, temporary tags, user management. |
+| **Analyzable** | ✅ The data model naturally produces interesting queries: FK gaps, date anomalies, utilization patterns. |
+| **Safe** | ✅ Fully anonymized seed data. No PII. No production records. |
+| **No API key needed** | ✅ Everything runs locally on SQLite. No LLM calls, no external services. |
 
-## Scenario Parameters
+## Domain Overview
 
-### Project: "Website Redaunch"
+The OneTag system manages **isolation of hazardous energy** in industrial environments (offshore platforms, refineries, chemical plants). Key processes:
 
-A simplified but realistic 12-task project with dependencies.
+### 1. RFI Lifecycle (Request for Isolation)
+```
+Request → Develop → Isolate → Work → Remove Isolation → Close
+```
+Each RFI can have multiple isolation points, jobs, locks, and log entries.
+
+### 2. Isolation Management
+Equipment has physical isolation points (breakers, valves, blinds). Each isolation point can be locked/tagged with padlocks. The system tracks which points are isolated, by whom, and when.
+
+### 3. Work Permits
+Hot work, cold work, confined space, working at height — each requires a permit linked to RFIs and jobs.
+
+### 4. Audits & Inspections
+Safety audits check isolation points for compliance. Defects can be reported and tracked.
+
+### 5. Temporary Tags
+Danger tags and out-of-service tags attached to equipment during maintenance.
+
+## Key Entities (The "Big 6")
+
+| Entity | What It Is | Volume |
+|--------|-----------|--------|
+| **RFIs** | Requests for Isolation — the core work request | 50 |
+| **IsolationPoints** | Physical points where energy is isolated (valves, breakers) | 10 |
+| **Jobs** | Work orders linked to RFIs | 40 |
+| **Users** | Operators, supervisors, safety officers | 12 |
+| **Audits** | Safety inspection events | 15 |
+| **WorkPermits** | Authorizations for hazardous work | 25 |
+
+## Interesting Analysis Questions
+
+### Anomaly Detection
+- Are there isolation points that are never used? (Underutilized asset)
+- Are there RFIs with isolation dates before the RFI creation date? (Data integrity)
+- Are there orphaned FK references? (Missing data)
+- Are there jobs completed before they were started? (Date logic errors)
+- What's the distribution of lock durations? (Outlier detection)
+
+### Pattern Recognition
+- Which isolation points are used most frequently? (Hot spots)
+- What's the peak hour/day for isolation activity? (Workload patterns)
+- Which users perform the most isolations? (Key person dependency)
+- What's the most common RFI workflow path? (Process analysis)
+
+### Relationship Discovery
+- Do high-risk areas have more audit defects? (Risk correlation)
+- Is there a relationship between isolation duration and audit findings? (Process quality)
+- Do certain companies/vendors have longer lock durations? (Vendor performance)
+- Is there a correlation between temporary tags and audit defects? (Safety indicators)
+
+### Statistical Analysis
+- Distribution of RFI duration (expected vs actual)
+- Isolation point utilization rates
+- Audit defect rates by area type
+- Work permit state distribution
+
+## Data Model
+
+The full Prisma schema is at `prisma/schema.prisma` (80+ models). The SQLite database at `data/onetag.db` contains seeded sample data.
+
+Key relationships:
 
 ```
-Task  Duration (days)  Dependencies  Resources
-────  ───────────────  ────────────  ─────────
-T1    3-5-7            -             1 dev
-T2    2-3-5            -             1 dev
-T3    1-2-3            T1            1 designer
-T4    4-6-10           T1, T2        2 devs
-T5    2-3-4            T2            1 dev
-T6    1-2-4            T3, T4        1 designer
-T7    3-4-6            T4            2 devs
-T8    2-3-5            T5            1 dev
-T9    1-2-3            T6, T7        1 QA
-T10   2-4-6            T7, T8        1 QA
-T11   1-1-2            T9, T10       1 PM
-T12   1-2-3            T11           1 dev
+Groups ──┬── Systems ── Equipment ── IsolationPoints
+          └── Areas ──── IsolationPoints
+          
+RFIs ──┬── RFIIsolations ── IsolationPoints
+       ├── RFIJobs ──────── Jobs
+       ├── RFILocks ─────── PadLocks
+       └── RFILogs
+
+Audits ──── AuditChecks
+RFIs ──── WorkPermits
+IsolationPoints ── TemporaryTags
 ```
 
-*Duration format: min-mode-max (PERT-style triangular distribution)*
+## Success Criteria
 
-### Dependency DAG
-
-```
-T1 ──┬── T3 ──┬── T6 ──┬── T9 ──┬── T11 ── T12
-     │        │        │        │
-T2 ──┴── T4 ──┘        │        │
-     │        │        │        │
-     └── T5 ──┴── T8 ──┴── T10 ─┘
-              │
-              └── T7 ─────────────┘
-```
-
-### Constraints
-
-| Constraint | Type | Value |
-|-----------|------|-------|
-| Deadline | **Hard** | 28 days |
-| Max concurrent devs | **Hard** | 3 |
-| Max concurrent designers | **Hard** | 2 |
-| Max concurrent QA | **Hard** | 2 |
-| Prefer fewer resource switches | Soft | Minimize handoffs |
-
-### Objective
-
-**Minimize probability of missing the 28-day deadline.**
-
-(Forrest minimizes by default, so the objective function should be: `P(makespan > 28)` — the probability of failure. Lower is better.)
-
-### Mutation Space
-
-Forrest can mutate:
-
-| Variable | Range | Notes |
-|----------|-------|-------|
-| Task duration estimates | ±20% of current min/mode/max | The core uncertainty |
-| Resource allocation | 1-3 devs per dev task | More resources = faster but higher cost |
-| Task parallelism | Relax non-critical dependencies | Can T5 start before T2 finishes? |
-| Buffer insertion | 0-3 days on critical path tasks | Explicit contingency |
-
-### What "Success" Looks Like
-
-A non-technical viewer reads the three findings and says:
-
-> *"So the bottleneck isn't the longest task — it's the task with the most uncertain duration on the critical path. And adding a second developer to T4 only helps if we also reduce T7's variance. That's actually useful — I'd act on that."*
-
-### What Would Surprise Us
-
-- The critical path shifts depending on which tasks are delayed (non-static critical path)
-- Adding resources to the longest task doesn't help because variance elsewhere dominates
-- The optimal strategy is to add buffer to one specific task, not spread contingency evenly
-- A non-critical task becomes critical in >30% of simulations (near-critical path)
-
-## Forrest Configuration
-
-```json
-{
-  "maxExperiments": 200,
-  "simsPerExpt": 500,
-  "objective": "minimize P(makespan > 28 days)",
-  "mutationSpace": {
-    "taskDurations": "±20% triangular",
-    "resourceAllocation": "1-3 devs per task",
-    "dependencyRelaxation": "boolean per non-critical dep",
-    "bufferInsertion": "0-3 days on critical path"
-  },
-  "constraints": {
-    "deadline": "28 days (hard)",
-    "maxConcurrentDevs": 3,
-    "maxConcurrentDesigners": 2,
-    "maxConcurrentQA": 2
-  }
-}
-```
-
-## Seed Data Source
-
-All numbers are synthetic, inspired by publicly available project management case studies (PMI PMBOK examples, open-source project post-mortems). No real customer data used.
-
-## Approval Status
-
-- [ ] Brief reviewed by manager/team
-- [ ] Scenario entered into Forrest
-- [ ] First tuning run launched
+| Level | Criteria |
+|-------|----------|
+| **Baseline** | Analysis runs without errors. At least one finding generated. |
+| **Target** | 3+ non-trivial findings per run. Findings are specific, quantified, and legible. |
+| **Stretch** | A finding reveals something genuinely unexpected about the data model or domain. |
