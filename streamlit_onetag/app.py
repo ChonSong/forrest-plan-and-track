@@ -741,6 +741,99 @@ def page_analysis(flt):
     """)
 
 
+def page_findings(flt):
+    """Forrest Analysis Engine — Findings page."""
+    st.title("🚀 Forrest Findings")
+    st.caption("Automated anomaly, pattern, and relationship detection over the OneTag HMAS data")
+
+    # Connect to local SQLite DB
+    import os as _os
+    _db_path = _os.path.join(_os.path.dirname(_os.path.dirname(__file__)), 'data', 'onetag.db')
+    if not _os.path.exists(_db_path):
+        st.error(f"Local database not found at {_db_path}")
+        st.info("Run `python scripts/seed_data.py` from the repo root to create it.")
+        return
+
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        run_btn = st.button("▶️ Run Analysis", type="primary", use_container_width=True)
+
+    with col1:
+        top_n = st.slider("Findings to display", 3, 20, 10, help="Number of top findings to show")
+
+    # Cache the result — re-run only when button is clicked
+    @st.cache_data(ttl=3600, show_spinner="Running Forrest analysis passes…")
+    def _run_forrest():
+        import sqlite3 as _sqlite3
+        _conn = _sqlite3.connect(_db_path)
+        _conn.row_factory = _sqlite3.Row
+        from engine.runner import run_all as _run_all
+        _result = _run_all(_conn)
+        _conn.close()
+        return _result
+
+    if run_btn:
+        st.cache_data.clear()
+
+    try:
+        result = _run_forrest()
+    except Exception as e:
+        st.error(f"Analysis engine failed: {e}")
+        st.info("Make sure the engine package is installed (run from repo root, not streamlit_onetag/)")
+        return
+
+    # Summary metrics
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Analysis Passes", result.passes_run)
+    c2.metric("Total Findings", result.total_findings)
+    c3.metric("Runtime", f"{result.duration_seconds:.2f}s")
+    best = result.top(1)
+    c4.metric("Top Score", f"{best[0].score:.3f}" if best else "—")
+
+    st.markdown("---")
+
+    if result.total_findings == 0:
+        st.info("No findings were generated. The seeded data may be too uniform — try running with more data.")
+        return
+
+    # Display findings
+    top_findings = result.top(top_n)
+    for i, f in enumerate(top_findings, 1):
+        sev_color = "#e74c3c" if f.score >= 0.6 else ("#f39c12" if f.score >= 0.4 else "#2ecc71")
+        sev_label = "🔴 Critical" if f.score >= 0.6 else ("🟡 Moderate" if f.score >= 0.4 else "🟢 Minor")
+
+        with st.container(border=True):
+            cols = st.columns([0.05, 0.7, 0.25])
+            with cols[0]:
+                st.markdown(f"<h2 style='color:{sev_color};margin:0'>{i}</h2>", unsafe_allow_html=True)
+            with cols[1]:
+                st.markdown(f"**{f.title}**")
+                st.caption(f"{f.description}")
+            with cols[2]:
+                st.markdown(f"<div style='text-align:right'><span style='background:{sev_color};color:white;padding:2px 8px;border-radius:4px;font-size:0.8em'>{sev_label}</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:right;margin-top:4px'><code>{f.category}</code> | Score: {f.score:.3f}</div>", unsafe_allow_html=True)
+
+            with st.expander("🔍 Details"):
+                det_cols = st.columns(3)
+                with det_cols[0]:
+                    st.markdown("**Severity**")
+                    st.progress(f.severity)
+                    st.caption(f"{f.severity:.2f}")
+                with det_cols[1]:
+                    st.markdown("**Specificity**")
+                    st.progress(f.specificity)
+                    st.caption(f"{f.specificity:.2f}")
+                with det_cols[2]:
+                    st.markdown("**Surprise**")
+                    st.progress(f.surprise)
+                    st.caption(f"{f.surprise:.2f}")
+
+                st.markdown("**Affected Tables**")
+                st.write(", ".join(f"`{t}`" for t in f.affected_tables))
+                st.markdown("**Query**")
+                st.code(f.query, language="sql")
+
+
 # ═══════════════════════════════════════════════════════════════
 #  JOB TIMEFRAME & PREDICTION QUERIES
 # ═══════════════════════════════════════════════════════════════
@@ -1962,7 +2055,7 @@ else:
     st.sidebar.info("Run: `docker start sqlserver-onetag` on host")
     st.stop()
 
-page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📊 Gantt Chart", "⏱️ Job Timeframes", "🔧 Constraints", "📈 Analysis"])
+page = st.sidebar.radio("Report", ["📊 Dashboard", "📋 RFI → Jobs → Vendors", "🔗 Jobs → Isolations → Equipment", "🔒 Lock History", "📜 RFI Log Timeline", "📊 Gantt Chart", "⏱️ Job Timeframes", "🔧 Constraints", "📈 Analysis", "🚀 Forrest Findings"])
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Filters")
@@ -1994,6 +2087,7 @@ pages = {
     "⏱️ Job Timeframes": page_job_timeframes,
     "🔧 Constraints": page_constraint_analyzer,
     "📈 Analysis": page_analysis,
+    "🚀 Forrest Findings": page_findings,
 }
 
 # -- Reconnect button --
